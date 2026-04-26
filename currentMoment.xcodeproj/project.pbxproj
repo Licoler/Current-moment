@@ -6,8 +6,53 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D1A100012F81000100000001 /* CurrentMomentRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A100012F81000100000007 /* CurrentMomentRepositoryTests.swift */; };
+		D1A100012F81000100000002 /* CurrentMomentViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A100012F81000100000008 /* CurrentMomentViewModelTests.swift */; };
+		D1A100012F81000100000003 /* CurrentMomentTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A100012F81000100000009 /* CurrentMomentTestSupport.swift */; };
+		D1A100012F81000100000004 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1A100012F8100010000000A /* XCTest.framework */; };
+		E1A100012F82000100000001 /* currentMomentWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E1A100012F82000100000003 /* currentMomentWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D1A100012F81000100000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C27EA09D2F800CAB0044819D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C27EA0A42F800CAB0044819D;
+			remoteInfo = currentMoment;
+		};
+		E1A100012F82000100000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C27EA09D2F800CAB0044819D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1A100012F82000100000007;
+			remoteInfo = currentMomentWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E1A100012F82000100000006 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E1A100012F82000100000001 /* currentMomentWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		C27EA0A52F800CAB0044819D /* currentMoment.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = currentMoment.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1A100012F81000100000006 /* currentMomentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = currentMomentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1A100012F81000100000007 /* CurrentMomentRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentMomentRepositoryTests.swift; sourceTree = "<group>"; };
+		D1A100012F81000100000008 /* CurrentMomentViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentMomentViewModelTests.swift; sourceTree = "<group>"; };
+		D1A100012F81000100000009 /* CurrentMomentTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentMomentTestSupport.swift; sourceTree = "<group>"; };
+		D1A100012F8100010000000A /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		E1A100012F82000100000003 /* currentMomentWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = currentMomentWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -17,6 +62,13 @@
 				Info.plist,
 			);
 			target = C27EA0A42F800CAB0044819D /* currentMoment */;
+		};
+		E1A100012F82000100000004 /* Exceptions for "WidgetExtension" folder in "currentMomentWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E1A100012F82000100000007 /* currentMomentWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -29,10 +81,33 @@
 			path = currentMoment;
 			sourceTree = "<group>";
 		};
+		E1A100012F82000100000005 /* WidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E1A100012F82000100000004 /* Exceptions for "WidgetExtension" folder in "currentMomentWidgetExtension" target */,
+			);
+			path = WidgetExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		C27EA0A22F800CAB0044819D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D1A100012F8100010000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1A100012F81000100000004 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1A100012F8200010000000A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +121,9 @@
 			isa = PBXGroup;
 			children = (
 				C27EA0A72F800CAB0044819D /* currentMoment */,
+				E1A100012F82000100000005 /* WidgetExtension */,
+				D1A100012F8100010000000C /* Tests */,
+				D1A100012F8100010000000D /* Frameworks */,
 				C27EA0A62F800CAB0044819D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,8 +132,28 @@
 			isa = PBXGroup;
 			children = (
 				C27EA0A52F800CAB0044819D /* currentMoment.app */,
+				E1A100012F82000100000003 /* currentMomentWidgetExtension.appex */,
+				D1A100012F81000100000006 /* currentMomentTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		D1A100012F8100010000000C /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				D1A100012F81000100000007 /* CurrentMomentRepositoryTests.swift */,
+				D1A100012F81000100000008 /* CurrentMomentViewModelTests.swift */,
+				D1A100012F81000100000009 /* CurrentMomentTestSupport.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		D1A100012F8100010000000D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D1A100012F8100010000000A /* XCTest.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -68,10 +166,12 @@
 				C27EA0A12F800CAB0044819D /* Sources */,
 				C27EA0A22F800CAB0044819D /* Frameworks */,
 				C27EA0A32F800CAB0044819D /* Resources */,
+				E1A100012F82000100000006 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E1A100012F8200010000000B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C27EA0A72F800CAB0044819D /* currentMoment */,
@@ -82,6 +182,48 @@
 			productName = currentMoment;
 			productReference = C27EA0A52F800CAB0044819D /* currentMoment.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D1A100012F8100010000000E /* currentMomentTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D1A100012F81000100000014 /* Build configuration list for PBXNativeTarget "currentMomentTests" */;
+			buildPhases = (
+				D1A100012F81000100000010 /* Sources */,
+				D1A100012F8100010000000B /* Frameworks */,
+				D1A100012F8100010000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D1A100012F81000100000011 /* PBXTargetDependency */,
+			);
+			name = currentMomentTests;
+			packageProductDependencies = (
+			);
+			productName = currentMomentTests;
+			productReference = D1A100012F81000100000006 /* currentMomentTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E1A100012F82000100000007 /* currentMomentWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1A100012F8200010000000E /* Build configuration list for PBXNativeTarget "currentMomentWidgetExtension" */;
+			buildPhases = (
+				E1A100012F82000100000009 /* Sources */,
+				E1A100012F8200010000000A /* Frameworks */,
+				E1A100012F82000100000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E1A100012F82000100000005 /* WidgetExtension */,
+			);
+			name = currentMomentWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = currentMomentWidgetExtension;
+			productReference = E1A100012F82000100000003 /* currentMomentWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -94,6 +236,13 @@
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					C27EA0A42F800CAB0044819D = {
+						CreatedOnToolsVersion = 26.4;
+					};
+					D1A100012F8100010000000E = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = C27EA0A42F800CAB0044819D;
+					};
+					E1A100012F82000100000007 = {
 						CreatedOnToolsVersion = 26.4;
 					};
 				};
@@ -113,12 +262,28 @@
 			projectRoot = "";
 			targets = (
 				C27EA0A42F800CAB0044819D /* currentMoment */,
+				E1A100012F82000100000007 /* currentMomentWidgetExtension */,
+				D1A100012F8100010000000E /* currentMomentTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		C27EA0A32F800CAB0044819D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D1A100012F8100010000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1A100012F82000100000008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +300,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D1A100012F81000100000010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D1A100012F81000100000001 /* CurrentMomentRepositoryTests.swift in Sources */,
+				D1A100012F81000100000003 /* CurrentMomentTestSupport.swift in Sources */,
+				D1A100012F81000100000002 /* CurrentMomentViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1A100012F82000100000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D1A100012F81000100000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C27EA0A42F800CAB0044819D /* currentMoment */;
+			targetProxy = D1A100012F81000100000005 /* PBXContainerItemProxy */;
+		};
+		E1A100012F8200010000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E1A100012F82000100000007 /* currentMomentWidgetExtension */;
+			targetProxy = E1A100012F82000100000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C27EA0B92F800CAC0044819D /* Debug */ = {
@@ -149,10 +344,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = currentMoment/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -161,8 +355,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMoment;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -181,10 +378,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = currentMoment/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -193,8 +389,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMoment;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -323,6 +522,120 @@
 			};
 			name = Release;
 		};
+		D1A100012F81000100000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2CJFQVP5J8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMomentTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/currentMoment.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/currentMoment";
+			};
+			name = Debug;
+		};
+		D1A100012F81000100000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2CJFQVP5J8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMomentTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/currentMoment.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/currentMoment";
+			};
+			name = Release;
+		};
+		E1A100012F8200010000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2CJFQVP5J8;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMoment.WidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E1A100012F8200010000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2CJFQVP5J8;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = halapov.currentMoment.WidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -340,6 +653,24 @@
 			buildConfigurations = (
 				C27EA0B92F800CAC0044819D /* Debug */,
 				C27EA0BA2F800CAC0044819D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D1A100012F81000100000014 /* Build configuration list for PBXNativeTarget "currentMomentTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1A100012F81000100000012 /* Debug */,
+				D1A100012F81000100000013 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1A100012F8200010000000E /* Build configuration list for PBXNativeTarget "currentMomentWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1A100012F8200010000000C /* Debug */,
+				E1A100012F8200010000000D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
