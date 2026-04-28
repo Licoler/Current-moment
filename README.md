@@ -152,7 +152,7 @@ currentMoment/
 
 ### Camera
 
-![Camera](Screenshots/camera.png)
+![Camera](Screenshots/IMAGE 2026-04-28 19:42:27.jpg)
 
 ### Friends
 
