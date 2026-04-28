@@ -1,16 +1,11 @@
 import UIKit
 
 final class PreviewRecipientCell: UICollectionViewCell {
-
     static let reuseIdentifier = "PreviewRecipientCell"
-
-    // MARK: - UI
 
     private let ringView   = UIView()
     private let avatarView = AvatarView()
     private let nameLabel  = UILabel()
-
-    // MARK: - Init
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,15 +43,12 @@ final class PreviewRecipientCell: UICollectionViewCell {
         ])
     }
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    // MARK: - Configure
+    required init?(coder: NSCoder) { fatalError() }
 
     func configure(with user: User, isSelected: Bool) {
         avatarView.configure(with: user, imagePipeline: .shared)
         nameLabel.text = user.displayName
         ringView.layer.borderColor = isSelected ? UIColor.white.cgColor : UIColor.clear.cgColor
-        contentView.alpha          = isSelected ? 1.0 : 0.66
+        contentView.alpha = isSelected ? 1.0 : 0.66
     }
 }

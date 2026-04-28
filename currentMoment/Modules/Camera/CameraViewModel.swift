@@ -6,7 +6,6 @@ import UIKit
 final class CameraViewModel {
 
     @Published private(set) var cameraAvailability: CameraSessionController.Availability = .unavailable
-    @Published private(set) var selectedCaptureMode: CameraCaptureMode = .photo
     @Published private(set) var statusMessage: String?
 
     var captureSession: AVCaptureSession { sessionController.captureSession }
@@ -20,7 +19,7 @@ final class CameraViewModel {
         self.repository = repository
     }
 
-    func prepareSession() {
+    func prepareAndStart() {
         sessionController.onPhotoCaptured = { [weak self] image in
             self?.handleCapturedImage(image)
         }
@@ -30,12 +29,11 @@ final class CameraViewModel {
                 guard let self else { return }
                 self.cameraAvailability = availability
                 self.statusMessage = availability == .available ? nil : availability.statusMessage
+                if availability == .available {
+                    self.sessionController.startRunning()
+                }
             }
         }
-    }
-
-    func startSession() {
-        sessionController.startRunning()
     }
 
     func stopSession() {
@@ -43,38 +41,20 @@ final class CameraViewModel {
     }
 
     func captureMoment() {
-        if cameraAvailability == .available {
-            sessionController.capturePhoto()
-        } else {
+        guard cameraAvailability == .available else {
             let demoImage = DemoCaptureImageFactory.makeImage()
             handleCapturedImage(demoImage)
+            return
         }
+        sessionController.capturePhoto()
     }
 
     func switchCamera() {
         sessionController.switchCamera()
     }
 
-    func selectCaptureMode(at index: Int) {
-        selectedCaptureMode = CameraCaptureMode(rawValue: index) ?? .photo
-    }
-
-    func prepareAndStart() {
-        prepareSession()
-        $cameraAvailability
-            .filter { $0 == .available }
-            .first()
-            .sink { [weak self] _ in
-                self?.startSession()
-            }
-            .store(in: &cancellables)
-    }
-
     private func handleCapturedImage(_ image: UIImage) {
-        guard let asset = CapturedMomentAsset.make(
-            from: image,
-            isLivePhoto: selectedCaptureMode == .live
-        ) else {
+        guard let asset = CapturedMomentAsset.make(from: image) else {
             statusMessage = AppError.cameraUnavailable.localizedDescription
             return
         }

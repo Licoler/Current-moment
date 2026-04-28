@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UIKit
 
 @MainActor
 final class PreviewViewModel {
@@ -54,7 +55,7 @@ final class PreviewViewModel {
             thumbnailData: asset.thumbnailData,
             caption: caption.trimmingCharacters(in: .whitespacesAndNewlines),
             recipientIds: Array(selectedRecipientIDs),
-            isLivePhoto: asset.isLivePhoto
+            isLivePhoto: false
         )
 
         Task {

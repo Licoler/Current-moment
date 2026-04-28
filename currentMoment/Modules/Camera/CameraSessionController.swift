@@ -24,12 +24,13 @@ final class CameraSessionController: NSObject {
     let captureSession = AVCaptureSession()
     var onPhotoCaptured: ((UIImage) -> Void)?
     private(set) var availability: Availability = .unavailable
+    private(set) var isCapturingPhoto = false
 
     private let sessionQueue = DispatchQueue(label: "app.camera.session", qos: .userInitiated)
     private let photoOutput = AVCapturePhotoOutput()
     private var activeInput: AVCaptureDeviceInput?
     private var isConfigured = false
-    private var cameraPosition: AVCaptureDevice.Position = .front
+    private(set) var cameraPosition: AVCaptureDevice.Position = .front
 
     override init() {
         super.init()
@@ -43,8 +44,7 @@ final class CameraSessionController: NSObject {
         availability = .simulator
         completion(.simulator)
         #else
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-        switch status {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             configureSession(completion: completion)
         case .notDetermined:
@@ -98,8 +98,6 @@ final class CameraSessionController: NSObject {
                 return
             }
             self.captureSession.addOutput(self.photoOutput)
-
-            // Настройка высокого разрешения (iOS 16+)
             if #available(iOS 16.0, *) {
                 let dimensions = self.activeInput?.device.activeFormat.supportedMaxPhotoDimensions
                 if let lastDim = dimensions?.last {
@@ -131,7 +129,8 @@ final class CameraSessionController: NSObject {
     }
 
     func capturePhoto() {
-        guard availability == .available else { return }
+        guard !isCapturingPhoto, availability == .available else { return }
+        isCapturingPhoto = true
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .off
         if #available(iOS 16.0, *) {
@@ -147,12 +146,16 @@ final class CameraSessionController: NSObject {
 
     func switchCamera() {
         guard availability == .available else { return }
+        let oldPosition = cameraPosition
         cameraPosition = cameraPosition == .front ? .back : .front
 
         sessionQueue.async { [weak self] in
             guard let self else { return }
             guard let newDevice = self.bestCamera(for: self.cameraPosition),
-                  let newInput = try? AVCaptureDeviceInput(device: newDevice) else { return }
+                  let newInput = try? AVCaptureDeviceInput(device: newDevice) else {
+                self.cameraPosition = oldPosition
+                return
+            }
 
             self.captureSession.beginConfiguration()
             if let oldInput = self.activeInput {
@@ -166,7 +169,6 @@ final class CameraSessionController: NSObject {
                     self.captureSession.addInput(oldInput)
                 }
             }
-            // Обновляем настройки высокого разрешения для новой камеры
             if #available(iOS 16.0, *) {
                 let dimensions = self.activeInput?.device.activeFormat.supportedMaxPhotoDimensions
                 if let lastDim = dimensions?.last {
@@ -182,25 +184,11 @@ final class CameraSessionController: NSObject {
     }
 }
 
-// MARK: - AVCapturePhotoCaptureDelegate
-
 extension CameraSessionController: AVCapturePhotoCaptureDelegate {
-    func photoOutput(
-        _ output: AVCapturePhotoOutput,
-        didFinishProcessingPhoto photo: AVCapturePhoto,
-        error: Error?
-    ) {
-        guard error == nil,
-              let data = photo.fileDataRepresentation(),
-              let image = UIImage(data: data) else { return }
-
-        let finalImage: UIImage
-        if cameraPosition == .front {
-            finalImage = flipHorizontallyAndNormalize(image)
-        } else {
-            finalImage = image
-        }
-
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        defer { isCapturingPhoto = false }
+        guard error == nil, let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
+        let finalImage: UIImage = (cameraPosition == .front) ? flipHorizontallyAndNormalize(image) : image
         DispatchQueue.main.async { [weak self] in
             self?.onPhotoCaptured?(finalImage)
         }
@@ -216,28 +204,13 @@ extension CameraSessionController: AVCapturePhotoCaptureDelegate {
             normalized = UIGraphicsGetImageFromCurrentImageContext() ?? image
             UIGraphicsEndImageContext()
         }
-
         guard let cgImage = normalized.cgImage else { return image }
-
-        let width = cgImage.width
-        let height = cgImage.height
+        let width = cgImage.width, height = cgImage.height
         let colorSpace = cgImage.colorSpace ?? CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo = cgImage.bitmapInfo.rawValue
-
-        guard let context = CGContext(
-            data: nil,
-            width: width,
-            height: height,
-            bitsPerComponent: cgImage.bitsPerComponent,
-            bytesPerRow: 0,
-            space: colorSpace,
-            bitmapInfo: bitmapInfo
-        ) else { return image }
-
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: cgImage.bitsPerComponent, bytesPerRow: 0, space: colorSpace, bitmapInfo: cgImage.bitmapInfo.rawValue) else { return image }
         context.translateBy(x: CGFloat(width), y: 0)
         context.scaleBy(x: -1.0, y: 1.0)
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-
         guard let flippedCgImage = context.makeImage() else { return image }
         return UIImage(cgImage: flippedCgImage, scale: normalized.scale, orientation: .up)
     }
