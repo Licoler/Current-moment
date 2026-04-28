@@ -1,17 +1,35 @@
-import AVFoundation
 import UIKit
+import AVFoundation
 
-/// Полноэкранный превью-слой камеры.
-/// layerClass переопределён так, чтобы backing layer был AVCaptureVideoPreviewLayer —
-/// тогда его frame всегда совпадает с bounds вью и не нужно отдельно обновлять.
 final class CameraPreviewView: UIView {
-
+    
     override class var layerClass: AnyClass {
         AVCaptureVideoPreviewLayer.self
     }
-
-    var capturePreviewLayer: AVCaptureVideoPreviewLayer {
-        // Приведение всегда безопасно: layerClass гарантирует тип.
+    
+    private var previewLayer: AVCaptureVideoPreviewLayer {
         layer as! AVCaptureVideoPreviewLayer
+    }
+    
+    var session: AVCaptureSession? {
+        get { previewLayer.session }
+        set { previewLayer.session = newValue }
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        translatesAutoresizingMaskIntoConstraints = false
+        layer.cornerRadius = 24
+        clipsToBounds = true
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        previewLayer.frame = bounds
+        previewLayer.videoGravity = .resizeAspectFill
     }
 }

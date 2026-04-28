@@ -5,9 +5,14 @@ import UserNotifications
 
 protocol CurrentMomentNotificationServiceProtocol: AnyObject {
     func configure() async
+    func deleteMoment(_ momentId: String) async throws
 }
 
 final class CurrentMomentNotificationService: NSObject, CurrentMomentNotificationServiceProtocol {
+    func deleteMoment(_ momentId: String) async throws {
+        print("")
+    }
+    
     private let repository: CurrentMomentRepositoryProtocol
     private var cancellables: Set<AnyCancellable> = []
     private var seenMomentIDs: Set<String> = []

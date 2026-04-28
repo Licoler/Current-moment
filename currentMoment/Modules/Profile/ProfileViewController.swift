@@ -30,12 +30,8 @@ final class ProfileViewController: UIViewController {
         symbol: "rectangle.portrait.and.arrow.right", title: "Log out",
         subtitle: "End the current session", destructive: true)
 
-    // MARK: - Callbacks
-
     var onBack: (() -> Void)?
     var onLoggedOut: (() -> Void)?
-
-    // MARK: - Init
 
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
@@ -44,16 +40,12 @@ final class ProfileViewController: UIViewController {
 
     required init?(coder: NSCoder) { fatalError() }
 
-    // MARK: - Lifecycle
-
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CMColor.background
         setupViews()
         bindViewModel()
     }
-
-    // MARK: - Setup
 
     private func setupViews() {
         titleLabel.text      = "Profile"
@@ -137,8 +129,6 @@ final class ProfileViewController: UIViewController {
         ])
     }
 
-    // MARK: - Bind
-
     private func bindViewModel() {
         viewModel.$user
             .receive(on: DispatchQueue.main)
@@ -199,7 +189,6 @@ final class ProfileViewController: UIViewController {
     }
 
     @objc private func handleNotificationsTap() {
-        // Открываем настройки уведомлений системы
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }

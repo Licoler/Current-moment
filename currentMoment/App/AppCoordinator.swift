@@ -133,6 +133,7 @@ final class AppCoordinator {
     private func showMomentDetail(_ moment: Moment) {
         let controller = MomentDetailViewController(moment: moment, imagePipeline: container.imagePipeline)
         controller.onBack = { [weak self] in self?.navigationController.popViewController(animated: true) }
+        controller.onDelete = { [weak self] in self?.navigationController.popViewController(animated: true) }
         push(controller)
     }
 
