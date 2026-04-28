@@ -12,10 +12,10 @@ final class CameraSessionController: NSObject {
         
         var statusMessage: String {
             switch self {
-            case .available:   return "Camera ready."
-            case .simulator:   return "Simulator mode. Demo frame will be used."
-            case .denied:      return "Camera access denied. Enable in Settings."
-            case .restricted:  return "Camera access restricted."
+            case .available: return "Camera ready."
+            case .simulator: return "Simulator mode. Demo frame will be used."
+            case .denied: return "Camera access denied. Enable in Settings."
+            case .restricted: return "Camera access restricted."
             case .unavailable: return "No camera source available."
             }
         }
@@ -23,7 +23,7 @@ final class CameraSessionController: NSObject {
     
     let captureSession = AVCaptureSession()
     var onPhotoCaptured: ((UIImage) -> Void)?
-    /// Called on main thread whenever availability changes (authorized / denied / unavailable / simulator)
+    
     var availabilityChanged: ((Availability) -> Void)?
     private(set) var availability: Availability = .unavailable
     private(set) var isCapturingPhoto = false
@@ -42,7 +42,7 @@ final class CameraSessionController: NSObject {
         captureSession.automaticallyConfiguresCaptureDeviceForWideColor = false
         addSessionNotifications()
     }
-
+    
     deinit {
         removeSessionNotifications()
     }
@@ -52,10 +52,10 @@ final class CameraSessionController: NSObject {
     }
     
     func prepare(completion: @escaping (Availability) -> Void) {
-        #if targetEnvironment(simulator)
+#if targetEnvironment(simulator)
         availability = .simulator
         completion(.simulator)
-        #else
+#else
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
         case .authorized:
@@ -79,7 +79,7 @@ final class CameraSessionController: NSObject {
             availability = .unavailable
             completion(.unavailable)
         }
-        #endif
+#endif
     }
     
     private func configureSession(completion: @escaping (Availability) -> Void) {
@@ -204,15 +204,14 @@ extension CameraSessionController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         defer { isCapturingPhoto = false }
         if let error = error {
-            // Log the error for diagnostics
-            #if DEBUG
+
+#if DEBUG
             print("[CameraSessionController] photo capture error: \(error)")
-            #endif
+#endif
             return
         }
         guard let data = photo.fileDataRepresentation() else { return }
-
-        // Heavy image processing (normalization / flipping) off the main thread
+        
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             guard let image = UIImage(data: data) else { return }
@@ -263,7 +262,7 @@ extension CameraSessionController {
                                                selector: #selector(sessionRuntimeError(_:)),
                                                name: AVCaptureSession.runtimeErrorNotification,
                                                object: captureSession)
-
+        
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(applicationDidEnterBackground(_:)),
                                                name: UIApplication.didEnterBackgroundNotification,
@@ -273,29 +272,28 @@ extension CameraSessionController {
                                                name: UIApplication.willEnterForegroundNotification,
                                                object: nil)
     }
-
+    
     private func removeSessionNotifications() {
         NotificationCenter.default.removeObserver(self)
     }
-
+    
     @objc private func sessionWasInterrupted(_ notification: Notification) {
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
-            #if DEBUG
+#if DEBUG
             print("[CameraSessionController] session was interrupted")
-            #endif
+#endif
             self.availability = .unavailable
             DispatchQueue.main.async { self.availabilityChanged?(.unavailable) }
         }
     }
-
+    
     @objc private func sessionInterruptionEnded(_ notification: Notification) {
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
-            #if DEBUG
+#if DEBUG
             print("[CameraSessionController] session interruption ended")
-            #endif
-            // Attempt to restart if configured
+#endif
             if self.isConfigured {
                 self.availability = .available
                 DispatchQueue.main.async { self.availabilityChanged?(.available) }
@@ -305,15 +303,14 @@ extension CameraSessionController {
             }
         }
     }
-
+    
     @objc private func sessionRuntimeError(_ notification: Notification) {
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             let error = notification.userInfo?[AVCaptureSessionErrorKey] as? NSError
-            #if DEBUG
+#if DEBUG
             print("[CameraSessionController] runtime error: \(String(describing: error))")
-            #endif
-            // Try to recover after a short delay
+#endif
             self.availability = .unavailable
             DispatchQueue.main.async { self.availabilityChanged?(.unavailable) }
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -328,14 +325,12 @@ extension CameraSessionController {
             }
         }
     }
-
+    
     @objc private func applicationDidEnterBackground(_ notification: Notification) {
-        // stop session when app backgrounded
         stopRunning()
     }
-
+    
     @objc private func applicationWillEnterForeground(_ notification: Notification) {
-        // attempt to restart when app comes back
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             if self.isConfigured {

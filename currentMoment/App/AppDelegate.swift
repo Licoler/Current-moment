@@ -3,7 +3,7 @@ import UIKit
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     let container = AppDependencyContainer.makeDefault()
-
+    
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -11,9 +11,9 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseBootstrap.configureIfAvailable()
         return true
     }
-
+    
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
-    options: UIScene.ConnectionOptions
+                     options: UIScene.ConnectionOptions
     ) -> UISceneConfiguration {
         let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
         configuration.delegateClass = SceneDelegate.self

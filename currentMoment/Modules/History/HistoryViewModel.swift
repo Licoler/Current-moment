@@ -3,17 +3,17 @@ import Foundation
 
 @MainActor
 final class HistoryViewModel {
-
+    
     @Published private(set) var moments: [Moment] = []
-
+    
     private let repository:   CurrentMomentRepositoryProtocol
     private var allMoments:   [Moment] = []
     private var visibleCount  = 18
     private var cancellables: Set<AnyCancellable> = []
-
+    
     init(repository: CurrentMomentRepositoryProtocol) {
         self.repository = repository
-
+        
         repository.momentsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] moments in
@@ -24,7 +24,7 @@ final class HistoryViewModel {
             }
             .store(in: &cancellables)
     }
-
+    
     func loadMoreIfNeeded(currentIndex: Int) {
         guard currentIndex >= moments.count - 6 else { return }
         let nextCount = min(allMoments.count, visibleCount + 18)
@@ -32,7 +32,7 @@ final class HistoryViewModel {
         visibleCount = nextCount
         moments      = Array(allMoments.prefix(visibleCount))
     }
-
+    
     func moment(with id: String) -> Moment? {
         allMoments.first { $0.id == id }
     }

@@ -9,7 +9,7 @@ struct CurrentMomentEntry: TimelineEntry {
 
 struct CurrentMomentProvider: TimelineProvider {
     private let store = CurrentMomentWidgetStore()
-
+    
     func placeholder(in context: Context) -> CurrentMomentEntry {
         CurrentMomentEntry(
             date: .now,
@@ -21,11 +21,11 @@ struct CurrentMomentProvider: TimelineProvider {
             ]
         )
     }
-
+    
     func getSnapshot(in context: Context, completion: @escaping (CurrentMomentEntry) -> Void) {
         completion(CurrentMomentEntry(date: .now, snapshots: store.snapshots()))
     }
-
+    
     func getTimeline(in context: Context, completion: @escaping (Timeline<CurrentMomentEntry>) -> Void) {
         let entry = CurrentMomentEntry(date: .now, snapshots: store.snapshots())
         let timeline = Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60)))
@@ -35,16 +35,16 @@ struct CurrentMomentProvider: TimelineProvider {
 
 struct CurrentMomentCircleWidgetView: View {
     let entry: CurrentMomentEntry
-
+    
     private let columns = [
         GridItem(.flexible(), spacing: 8),
         GridItem(.flexible(), spacing: 8)
     ]
-
+    
     var body: some View {
         ZStack {
             Color.black
-
+            
             if entry.snapshots.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "photo.on.rectangle.angled")
@@ -78,7 +78,7 @@ struct CurrentMomentCircleWidgetView: View {
 
 private struct WidgetTile: View {
     let snapshot: WidgetMomentSnapshot
-
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomLeading) {
@@ -93,13 +93,13 @@ private struct WidgetTile: View {
                         endPoint: .bottomTrailing
                     )
                 }
-
+                
                 LinearGradient(
                     colors: [.clear, .black.opacity(0.78)],
                     startPoint: .center,
                     endPoint: .bottom
                 )
-
+                
                 Text(snapshot.username)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
@@ -111,7 +111,7 @@ private struct WidgetTile: View {
         }
         .aspectRatio(1.02, contentMode: .fit)
     }
-
+    
     private func resolveImage() -> UIImage? {
         let path = snapshot.thumbnailURL ?? snapshot.imageURL
         if let remoteURL = URL(string: path), remoteURL.scheme?.hasPrefix("http") == true {
@@ -123,7 +123,7 @@ private struct WidgetTile: View {
 
 struct CurrentMomentCircleWidget: Widget {
     let kind: String = "CurrentMomentWidget"
-
+    
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CurrentMomentProvider()) { entry in
             CurrentMomentCircleWidgetView(entry: entry)

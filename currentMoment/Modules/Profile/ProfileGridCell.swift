@@ -2,7 +2,7 @@ import UIKit
 
 final class ProfileGridCell: UICollectionViewCell {
     static let reuseIdentifier = "ProfileGridCell"
-
+    
     private let imageView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
@@ -10,7 +10,7 @@ final class ProfileGridCell: UICollectionViewCell {
         iv.translatesAutoresizingMaskIntoConstraints = false
         return iv
     }()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         contentView.addSubview(imageView)
@@ -21,9 +21,9 @@ final class ProfileGridCell: UICollectionViewCell {
             imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
-
+    
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
+    
     func configure(with moment: Moment, imagePipeline: ImagePipeline = .shared) {
         imageView.image = nil
         Task { @MainActor in

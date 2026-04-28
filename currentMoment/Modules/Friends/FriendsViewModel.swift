@@ -3,14 +3,14 @@ import UIKit
 
 @MainActor
 final class FriendsViewModel {
-
+    
     @Published private(set) var friends: [User] = []
     @Published private(set) var errorMessage: String?
-
+    
     private let repository: CurrentMomentRepositoryProtocol
     private let searchSubject = CurrentValueSubject<String, Never>("")
     private var cancellables: Set<AnyCancellable> = []
-
+    
     init(repository: CurrentMomentRepositoryProtocol) {
         self.repository = repository
         repository.friendsPublisher
@@ -20,18 +20,18 @@ final class FriendsViewModel {
             }
             .store(in: &cancellables)
     }
-
+    
     func updateSearchText(_ value: String) {
         searchSubject.send(value)
     }
-
+    
     func addFriend(_ user: User) {
         Task {
             do { try await repository.addFriend(user.id) }
             catch { errorMessage = error.localizedDescription }
         }
     }
-
+    
     func removeFriend(_ user: User) {
         Task {
             do { try await repository.removeFriend(user.id) }
@@ -55,7 +55,7 @@ final class FriendsViewModel {
         case .instagramDMs:
             urlToOpen = URL(string: "instagram://direct?text=\(encodedText)")
         case .instagramStory:
-            urlToOpen = URL(string: "instagram://")  // Instagram Story сложнее, просто открываем Instagram
+            urlToOpen = URL(string: "instagram://")
         case .messages:
             urlToOpen = URL(string: "sms:&body=\(encodedText)")
         case .other:

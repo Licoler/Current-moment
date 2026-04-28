@@ -8,7 +8,7 @@ enum AppError: LocalizedError, Equatable {
     case noRecipientsSelected
     case cameraUnavailable
     case generic(String)
-
+    
     var errorDescription: String? {
         switch self {
         case .firebaseNotConfigured:

@@ -2,32 +2,32 @@ import UIKit
 import Combine
 
 final class EditProfileViewController: UIViewController {
-
+    
     private let viewModel: ProfileViewModel
     private var cancellables: Set<AnyCancellable> = []
-
+    
     private let avatarView = AvatarView()
     private let fullNameField = UITextField()
     private let usernameField = UITextField()
     private let saveButton = UIButton(type: .system)
     private let stack = UIStackView()
     private let activity = UIActivityIndicatorView(style: .medium)
-
+    
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .pageSheet
     }
-
+    
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CMColor.background
         setupViews()
         bind()
     }
-
+    
     private func setupViews() {
         avatarView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(avatarView)
@@ -37,24 +37,24 @@ final class EditProfileViewController: UIViewController {
             avatarView.widthAnchor.constraint(equalToConstant: 100),
             avatarView.heightAnchor.constraint(equalToConstant: 100)
         ])
-
+        
         fullNameField.placeholder = "Full name"
         fullNameField.font = CMTypography.body
         fullNameField.borderStyle = .roundedRect
         fullNameField.translatesAutoresizingMaskIntoConstraints = false
-
+        
         usernameField.placeholder = "Username"
         usernameField.font = CMTypography.body
         usernameField.borderStyle = .roundedRect
         usernameField.autocapitalizationType = .none
         usernameField.autocorrectionType = .no
         usernameField.translatesAutoresizingMaskIntoConstraints = false
-
+        
         saveButton.setTitle("Save", for: .normal)
         saveButton.titleLabel?.font = CMTypography.bodySemibold
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.addTarget(self, action: #selector(saveTapped), for: .touchUpInside)
-
+        
         stack.axis = .vertical
         stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -62,28 +62,27 @@ final class EditProfileViewController: UIViewController {
         stack.addArrangedSubview(usernameField)
         stack.addArrangedSubview(saveButton)
         view.addSubview(stack)
-
+        
         activity.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(activity)
-
+        
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: avatarView.bottomAnchor, constant: 20),
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-
+            
             saveButton.heightAnchor.constraint(equalToConstant: 44),
             activity.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
             activity.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -12)
         ])
-
-        // populate
+        
         if let user = viewModel.user {
             avatarView.configure(with: user, imagePipeline: .shared)
             fullNameField.text = user.fullName
             usernameField.text = user.username
         }
     }
-
+    
     private func bind() {
         viewModel.$isSaving
             .receive(on: DispatchQueue.main)
@@ -92,7 +91,7 @@ final class EditProfileViewController: UIViewController {
                 if saving { self?.activity.startAnimating() } else { self?.activity.stopAnimating() }
             }
             .store(in: &cancellables)
-
+        
         viewModel.$errorMessage
             .compactMap { $0 }
             .receive(on: DispatchQueue.main)
@@ -103,7 +102,7 @@ final class EditProfileViewController: UIViewController {
             }
             .store(in: &cancellables)
     }
-
+    
     @objc private func saveTapped() {
         let fullName = fullNameField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let username = usernameField.text?.trimmingCharacters(in: .whitespaces) ?? ""
@@ -114,8 +113,6 @@ final class EditProfileViewController: UIViewController {
             return
         }
         viewModel.saveProfile(fullName: fullName, username: username)
-        // dismiss when saved — observe isSaving via bind and dismiss when finished
-        // we'll dismiss on success by observing repository sessionPublisher in ProfileViewController which updates user
         dismiss(animated: true)
     }
 }

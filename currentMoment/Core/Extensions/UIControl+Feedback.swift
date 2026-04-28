@@ -8,7 +8,7 @@ extension UIControl {
                 self.transform = .identity
             }
         }, for: [.touchUpInside, .touchCancel, .touchDragExit])
-
+        
         addAction(UIAction { [weak self] _ in
             guard let self else { return }
             UIView.animate(withDuration: 0.14) {

@@ -10,7 +10,7 @@ extension UIView {
             bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -insets.bottom)
         ])
     }
-
+    
     func pinToSafeArea(of view: UIView, insets: UIEdgeInsets = .zero) {
         translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -20,7 +20,7 @@ extension UIView {
             bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -insets.bottom)
         ])
     }
-
+    
     func pinCentered(to view: UIView, offset: CGPoint = .zero) {
         translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([

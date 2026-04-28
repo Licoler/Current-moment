@@ -9,18 +9,18 @@ final class PreviewViewModel {
     @Published private(set) var isSending = false
     @Published private(set) var errorMessage: String?
     @Published var caption: String = ""
-
+    
     let asset: CapturedMomentAsset
-
+    
     private let repository: CurrentMomentRepositoryProtocol
     private let imagePipeline: ImagePipeline
     private var cancellables: Set<AnyCancellable> = []
-
+    
     init(repository: CurrentMomentRepositoryProtocol, imagePipeline: ImagePipeline, asset: CapturedMomentAsset) {
         self.repository = repository
         self.imagePipeline = imagePipeline
         self.asset = asset
-
+        
         repository.friendsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] friends in
@@ -32,11 +32,11 @@ final class PreviewViewModel {
             }
             .store(in: &cancellables)
     }
-
+    
     func isSelected(_ user: User) -> Bool {
         selectedRecipientIDs.contains(user.id)
     }
-
+    
     func toggleRecipient(_ user: User) {
         if selectedRecipientIDs.contains(user.id) {
             selectedRecipientIDs.remove(user.id)
@@ -44,12 +44,12 @@ final class PreviewViewModel {
             selectedRecipientIDs.insert(user.id)
         }
     }
-
+    
     func send(completion: @escaping (Result<Moment, Error>) -> Void) {
         guard !isSending else { return }
         isSending = true
         errorMessage = nil
-
+        
         let draft = MomentDraft(
             imageData: asset.imageData,
             thumbnailData: asset.thumbnailData,
@@ -57,7 +57,7 @@ final class PreviewViewModel {
             recipientIds: Array(selectedRecipientIDs),
             isLivePhoto: false
         )
-
+        
         Task {
             do {
                 let moment = try await repository.sendMoment(draft)

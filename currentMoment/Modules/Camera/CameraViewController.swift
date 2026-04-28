@@ -78,10 +78,8 @@ final class CameraViewController: UIViewController {
         setupConstraints()
         bindViewModel()
         
-        // 1. Сначала подготавливаем камеру
         viewModel.prepareAndStart()
-
-        // 2. Когда будет получен кадр, передаём его — также ре-энейблим шуттер
+        
         viewModel.onMomentCaptured = { [weak self] asset in
             DispatchQueue.main.async {
                 self?.shutterButton.isEnabled = true
@@ -90,14 +88,13 @@ final class CameraViewController: UIViewController {
         }
     }
     
-    // Start the live session when view is visible and stop when it's going away.
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if viewModel.cameraAvailability == .available {
             viewModel.startSession()
         }
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         viewModel.stopSession()
@@ -105,7 +102,6 @@ final class CameraViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Принудительно обновляем frame слоя – на всякий случай
         previewView.setNeedsLayout()
         previewView.layoutIfNeeded()
     }
@@ -123,7 +119,6 @@ final class CameraViewController: UIViewController {
             view.addSubview($0)
         }
         
-        // Настройка previewView: связываем сессию
         previewView.session = viewModel.captureSession
         
         // Кнопки
@@ -195,12 +190,11 @@ final class CameraViewController: UIViewController {
             .store(in: &cancellables)
     }
     
-    @objc private func handleFriendsTap()   { onFriendsButtonTap?() }
-    @objc private func handleProfileTap()   { onProfileButtonTap?() }
-    @objc private func handleHistoryTap()   { onHistoryButtonTap?() }
-    @objc private func handleFlipTap()      { viewModel.switchCamera() }
-    @objc private func handleShutterTap()   {
-        // Prevent rapid double-taps — disable until we receive the captured moment callback
+    @objc private func handleFriendsTap() { onFriendsButtonTap?() }
+    @objc private func handleProfileTap() { onProfileButtonTap?() }
+    @objc private func handleHistoryTap() { onHistoryButtonTap?() }
+    @objc private func handleFlipTap() { viewModel.switchCamera() }
+    @objc private func handleShutterTap() {
         shutterButton.isEnabled = false
         shutterButton.animateCapturePulse()
         viewModel.captureMoment()

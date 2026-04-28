@@ -5,7 +5,7 @@ struct CapturedMomentAsset {
     let imageData: Data
     let thumbnailData: Data
     let isLivePhoto: Bool
-
+    
     static func make(from image: UIImage, targetSize: CGSize = CGSize(width: 1024, height: 1024)) -> CapturedMomentAsset? {
         let scaledImage = image.resizedAndCropped(to: targetSize)
         guard let imageData = scaledImage.jpegData(compressionQuality: 0.92),

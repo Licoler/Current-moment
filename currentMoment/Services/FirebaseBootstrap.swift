@@ -6,14 +6,14 @@ import FirebaseCore
 
 enum FirebaseBootstrap {
     static func configureIfAvailable() {
-        #if canImport(FirebaseCore)
+#if canImport(FirebaseCore)
         guard FirebaseApp.app() == nil else {
             return
         }
-
+        
         if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
             FirebaseApp.configure()
         }
-        #endif
+#endif
     }
 }

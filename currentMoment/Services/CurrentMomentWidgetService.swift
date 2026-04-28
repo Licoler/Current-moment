@@ -10,10 +10,10 @@ protocol CurrentMomentWidgetServiceProtocol: AnyObject {
 
 final class CurrentMomentWidgetService: CurrentMomentWidgetServiceProtocol {
     static let widgetKind = "CurrentMomentWidget"
-
+    
     func syncSnapshots(moments: [Moment], users: [User], currentUser: User?) async {
-        #if canImport(WidgetKit)
+#if canImport(WidgetKit)
         WidgetCenter.shared.reloadTimelines(ofKind: Self.widgetKind)
-        #endif
+#endif
     }
 }

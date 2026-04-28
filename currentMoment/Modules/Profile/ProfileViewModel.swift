@@ -15,14 +15,14 @@ final class ProfileViewModel {
     @Published private(set) var isLoadingMoments: Bool = true
     @Published private(set) var isSaving = false
     @Published private(set) var errorMessage: String?
-
+    
     private let repository: CurrentMomentRepositoryProtocol
     private var allMoments: [Moment] = []
     private var cancellables: Set<AnyCancellable> = []
-
+    
     init(repository: CurrentMomentRepositoryProtocol) {
         self.repository = repository
-
+        
         repository.sessionPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] user in
@@ -30,7 +30,7 @@ final class ProfileViewModel {
                 self?.recalculateStats()
             }
             .store(in: &cancellables)
-
+        
         repository.momentsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] moments in
@@ -40,12 +40,12 @@ final class ProfileViewModel {
             }
             .store(in: &cancellables)
     }
-
+    
     func saveProfile(fullName: String, username: String) {
         guard !isSaving else { return }
         isSaving = true
         errorMessage = nil
-
+        
         Task {
             do {
                 try await repository.updateProfile(fullName: fullName, username: username, avatarURL: nil)
@@ -56,7 +56,7 @@ final class ProfileViewModel {
             }
         }
     }
-
+    
     func logout(completion: @escaping () -> Void) {
         Task {
             do {
@@ -67,14 +67,14 @@ final class ProfileViewModel {
             }
         }
     }
-
+    
     private func recalculateStats() {
         guard let user else {
             stats = ProfileStats(photosSent: 0, friendsCount: 0, streakDays: 0)
             momentsSent = []
             return
         }
-
+        
         let sentMoments = allMoments.filter { $0.senderId == user.id }
         momentsSent = sentMoments.sorted(by: { $0.createdAt > $1.createdAt })
         stats = ProfileStats(
@@ -83,15 +83,15 @@ final class ProfileViewModel {
             streakDays: streakDays(from: sentMoments.map(\.createdAt))
         )
     }
-
+    
     private func streakDays(from dates: [Date]) -> Int {
         let calendar = Calendar.current
         let uniqueDays = Array(Set(dates.map { calendar.startOfDay(for: $0) })).sorted(by: >)
         guard let firstDay = uniqueDays.first else { return 0 }
-
+        
         var streak = 0
         var currentDay = calendar.startOfDay(for: .now)
-
+        
         while currentDay >= firstDay && uniqueDays.contains(currentDay) {
             streak += 1
             guard let previous = calendar.date(byAdding: .day, value: -1, to: currentDay) else {
@@ -99,7 +99,7 @@ final class ProfileViewModel {
             }
             currentDay = previous
         }
-
+        
         return streak
     }
 }

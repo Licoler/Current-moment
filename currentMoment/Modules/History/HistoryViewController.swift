@@ -80,9 +80,7 @@ final class HistoryViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Показываем навбар, чтобы заголовок "History" и стандартная кнопка "Назад" были видны
         navigationController?.setNavigationBarHidden(false, animated: animated)
-        // Настройка стандартного заголовка и кнопки
         title = "History"
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "chevron.left"),
@@ -94,16 +92,12 @@ final class HistoryViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        // Возвращаем скрытый навбар для остальных экранов
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
     
     private func setupViews() {
         view.addSubview(collectionView)
         view.addSubview(emptyLabel)
-        // Кастомные кнопка и заголовок не нужны, если включен навбар, но оставим на всякий случай (можно закомментировать)
-        // view.addSubview(backButton)
-        // view.addSubview(titleLabel)
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),

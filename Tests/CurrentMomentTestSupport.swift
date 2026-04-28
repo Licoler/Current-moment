@@ -5,13 +5,13 @@ import XCTest
 
 final class TestCurrentMomentWidgetService: CurrentMomentWidgetServiceProtocol {
     private(set) var syncedSnapshots: [[WidgetMomentSnapshot]] = []
-
+    
     func syncSnapshots(moments: [Moment], users: [User], currentUser: User?) async {
         guard let currentUser else {
             syncedSnapshots.append([])
             return
         }
-
+        
         let userIndex = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
         let snapshots = moments
             .filter { $0.senderId != currentUser.id }
@@ -28,7 +28,7 @@ final class TestCurrentMomentWidgetService: CurrentMomentWidgetServiceProtocol {
                     deepLink: "currentmoment://history/\(moment.id)"
                 )
             }
-
+        
         syncedSnapshots.append(Array(snapshots))
     }
 }
@@ -41,7 +41,7 @@ extension XCTestCase {
             context.fill(CGRect(origin: .zero, size: CGSize(width: 120, height: 120)))
         }
     }
-
+    
     func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

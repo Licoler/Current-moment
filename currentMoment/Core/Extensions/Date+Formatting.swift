@@ -6,7 +6,7 @@ extension Date {
         formatter.unitsStyle = .short
         return formatter.localizedString(for: self, relativeTo: .now)
     }
-
+    
     func dayMonthDescription() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d MMM"

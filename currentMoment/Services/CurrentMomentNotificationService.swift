@@ -17,24 +17,24 @@ final class CurrentMomentNotificationService: NSObject, CurrentMomentNotificatio
     private var cancellables: Set<AnyCancellable> = []
     private var seenMomentIDs: Set<String> = []
     private var isPrimed = false
-
+    
     init(repository: CurrentMomentRepositoryProtocol) {
         self.repository = repository
         super.init()
     }
-
+    
     func configure() async {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
-
+        
         do {
             _ = try await center.requestAuthorization(options: [.alert, .sound])
         } catch {
-            #if DEBUG
+#if DEBUG
             print("Local notification authorization failed: \(error)")
-            #endif
+#endif
         }
-
+        
         repository.momentsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] moments in
@@ -42,31 +42,31 @@ final class CurrentMomentNotificationService: NSObject, CurrentMomentNotificatio
             }
             .store(in: &cancellables)
     }
-
+    
     private func handleIncoming(moments: [Moment]) {
         guard let currentUser = repository.currentUser() else {
             seenMomentIDs.removeAll()
             isPrimed = false
             return
         }
-
+        
         let incomingMoments = moments.filter { $0.senderId != currentUser.id }
         if !isPrimed {
             incomingMoments.forEach { seenMomentIDs.insert($0.id) }
             isPrimed = true
             return
         }
-
+        
         let freshMoments = incomingMoments.filter { !seenMomentIDs.contains($0.id) }
         incomingMoments.forEach { seenMomentIDs.insert($0.id) }
-
+        
         guard let latest = freshMoments.first else { return }
-
+        
         let content = UNMutableNotificationContent()
         content.title = latest.senderName
         content.body = latest.caption.isEmpty ? "Sent you a new moment." : latest.caption
         content.sound = .default
-
+        
         let request = UNNotificationRequest(
             identifier: latest.id,
             content: content,

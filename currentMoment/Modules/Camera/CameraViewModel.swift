@@ -23,8 +23,7 @@ final class CameraViewModel {
         sessionController.onPhotoCaptured = { [weak self] image in
             self?.handleCapturedImage(image)
         }
-
-        // Observe availability changes emitted from the session controller.
+        
         sessionController.availabilityChanged = { [weak self] availability in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -35,7 +34,7 @@ final class CameraViewModel {
                 }
             }
         }
-
+        
         sessionController.prepare { [weak self] availability in
             Task { @MainActor [weak self] in
                 guard let self else { return }

@@ -26,7 +26,7 @@ enum AppShareOption: String, CaseIterable {
         case .telegram: return "tg://msg?text="
         case .whatsapp: return "whatsapp://send?text="
         case .instagramDMs: return "instagram://direct?text="
-        case .instagramStory: return nil          // требует особого подхода
+        case .instagramStory: return nil
         case .messages: return "sms:&body="
         case .other: return nil
         }
@@ -34,7 +34,7 @@ enum AppShareOption: String, CaseIterable {
 }
 
 final class FriendsViewController: UIViewController {
-
+    
     private enum Section: Int, CaseIterable {
         case friends
         case share
@@ -44,12 +44,11 @@ final class FriendsViewController: UIViewController {
         case friend(User)
         case shareApp(AppShareOption)
     }
-
+    
     private let viewModel: FriendsViewModel
     private var cancellables = Set<AnyCancellable>()
     private var dataSource: UITableViewDiffableDataSource<Section, Item>?
-
-    // UI
+    
     private let backButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "chevron.left")
@@ -103,13 +102,13 @@ final class FriendsViewController: UIViewController {
     }()
     
     var onBack: (() -> Void)?
-
+    
     init(viewModel: FriendsViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CMColor.background
@@ -126,7 +125,7 @@ final class FriendsViewController: UIViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
     }
-
+    
     private func setupViews() {
         view.addSubview(backButton)
         view.addSubview(titleLabel)
@@ -161,7 +160,7 @@ final class FriendsViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
-
+    
     private func configureDataSource() {
         dataSource = UITableViewDiffableDataSource<Section, Item>(tableView: tableView) { [weak self] tv, indexPath, item in
             switch item {
@@ -182,7 +181,7 @@ final class FriendsViewController: UIViewController {
         tableView.dataSource = dataSource
         tableView.delegate = self
     }
-
+    
     private func bindViewModel() {
         viewModel.$friends
             .receive(on: DispatchQueue.main)
@@ -214,7 +213,7 @@ final class FriendsViewController: UIViewController {
         
         dataSource?.apply(snapshot, animatingDifferences: true)
     }
-
+    
     @objc private func handleBackTap() {
         onBack?()
     }
@@ -244,7 +243,7 @@ extension FriendsViewController: UITableViewDelegate {
     }
 }
 
-// MARK: - Share App Cell (вся строка кликабельна)
+// MARK: - Share App Cell
 final class ShareAppCell: UITableViewCell {
     static let reuseIdentifier = "ShareAppCell"
     private var currentApp: AppShareOption?

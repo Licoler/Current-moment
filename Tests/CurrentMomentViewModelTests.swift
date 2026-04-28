@@ -7,13 +7,13 @@ final class CameraViewModelTests: XCTestCase {
     func testCaptureUsesDemoImageWhenCameraUnavailable() {
         let repository = MockCurrentMomentRepository(widgetService: TestCurrentMomentWidgetService())
         let viewModel = CameraViewModel(repository: repository)
-
+        
         let expectation = expectation(description: "captured asset")
         viewModel.onCaptureAsset = { asset in
             XCTAssertFalse(asset.isLivePhoto)
             expectation.fulfill()
         }
-
+        
         viewModel.captureMoment()
         wait(for: [expectation], timeout: 1)
     }
@@ -28,10 +28,10 @@ final class PreviewViewModelTests: XCTestCase {
         )
         await repository.loadInitialState()
         try await repository.signInDemoUser()
-
+        
         let asset = try XCTUnwrap(CapturedMomentAsset.make(from: makeImage(), isLivePhoto: false))
         let viewModel = PreviewViewModel(repository: repository, imagePipeline: .shared, asset: asset)
-
+        
         let recipientsLoaded = expectation(description: "friends loaded")
         let cancellable = viewModel.$recipients.dropFirst().sink { recipients in
             if !recipients.isEmpty {
@@ -39,9 +39,9 @@ final class PreviewViewModelTests: XCTestCase {
             }
         }
         await fulfillment(of: [recipientsLoaded], timeout: 1)
-
+        
         viewModel.caption = "Sent from tests"
-
+        
         let sent = expectation(description: "moment sent")
         viewModel.send { result in
             if case let .success(moment) = result {
@@ -65,10 +65,10 @@ final class FriendsViewModelTests: XCTestCase {
         )
         await repository.loadInitialState()
         try await repository.signInDemoUser()
-
+        
         let viewModel = FriendsViewModel(repository: repository)
         viewModel.updateSearchText("jules")
-
+        
         let suggestionsLoaded = expectation(description: "suggestions")
         let cancellable = viewModel.$suggestions.dropFirst().sink { users in
             if users.contains(where: { $0.id == "user-jules" }) {
@@ -76,10 +76,10 @@ final class FriendsViewModelTests: XCTestCase {
             }
         }
         await fulfillment(of: [suggestionsLoaded], timeout: 2)
-
+        
         let user = try XCTUnwrap(viewModel.suggestions.first(where: { $0.id == "user-jules" }))
         viewModel.addFriend(user)
-
+        
         let friendsUpdated = expectation(description: "friend added")
         let friendsCancellable = viewModel.$friends.dropFirst().sink { friends in
             if friends.contains(where: { $0.id == "user-jules" }) {
@@ -101,7 +101,7 @@ final class ProfileViewModelTests: XCTestCase {
         )
         await repository.loadInitialState()
         try await repository.signInDemoUser()
-
+        
         let image = makeImage()
         let data = try XCTUnwrap(image.jpegData(compressionQuality: 0.9))
         _ = try await repository.sendMoment(
@@ -113,9 +113,9 @@ final class ProfileViewModelTests: XCTestCase {
                 isLivePhoto: false
             )
         )
-
+        
         let viewModel = ProfileViewModel(repository: repository)
-
+        
         let profileLoaded = expectation(description: "profile stats")
         let cancellable = viewModel.$stats.dropFirst().sink { stats in
             if stats.photosSent >= 1 {
@@ -123,7 +123,7 @@ final class ProfileViewModelTests: XCTestCase {
             }
         }
         await fulfillment(of: [profileLoaded], timeout: 1)
-
+        
         XCTAssertGreaterThanOrEqual(viewModel.stats.photosSent, 1)
         XCTAssertGreaterThanOrEqual(viewModel.stats.friendsCount, 4)
         XCTAssertNotNil(viewModel.user)

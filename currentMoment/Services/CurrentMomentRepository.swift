@@ -5,7 +5,7 @@ protocol CurrentMomentRepositoryProtocol: AnyObject {
     var sessionPublisher: AnyPublisher<User?, Never> { get }
     var momentsPublisher: AnyPublisher<[Moment], Never> { get }
     var friendsPublisher: AnyPublisher<[User], Never> { get }
-
+    
     func loadInitialState() async
     func currentUser() -> User?
     func signInDemoUser() async throws
@@ -20,11 +20,11 @@ protocol CurrentMomentRepositoryProtocol: AnyObject {
 
 enum CurrentMomentRepositoryFactory {
     static func makeRepository(widgetService: CurrentMomentWidgetServiceProtocol) -> CurrentMomentRepositoryProtocol {
-        #if canImport(FirebaseAuth) && canImport(FirebaseFirestore) && canImport(FirebaseStorage)
+#if canImport(FirebaseAuth) && canImport(FirebaseFirestore) && canImport(FirebaseStorage)
         return FirebaseCurrentMomentRepository(widgetService: widgetService)
-        #else
+#else
         return MockCurrentMomentRepository(widgetService: widgetService)
-        #endif
+#endif
     }
 }
 
@@ -42,40 +42,40 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
     private let widgetService: CurrentMomentWidgetServiceProtocol
     private let stateURL: URL
     private let imagesDirectoryURL: URL
-
+    
     private var state: MockRepositoryState
-
+    
     init(widgetService: CurrentMomentWidgetServiceProtocol, rootURL: URL? = nil) {
         self.widgetService = widgetService
-
+        
         let supportURL = rootURL ?? ((try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )) ?? URL(fileURLWithPath: NSTemporaryDirectory()))
-
+        
         let repositoryRootURL = supportURL.appendingPathComponent("MockCurrentMomentRepository", isDirectory: true)
         self.stateURL = repositoryRootURL.appendingPathComponent("state.json")
         self.imagesDirectoryURL = repositoryRootURL.appendingPathComponent("Images", isDirectory: true)
         self.state = Self.seedState()
-
+        
         try? FileManager.default.createDirectory(at: repositoryRootURL, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: imagesDirectoryURL, withIntermediateDirectories: true)
     }
-
+    
     var sessionPublisher: AnyPublisher<User?, Never> {
         sessionSubject.eraseToAnyPublisher()
     }
-
+    
     var momentsPublisher: AnyPublisher<[Moment], Never> {
         momentsSubject.eraseToAnyPublisher()
     }
-
+    
     var friendsPublisher: AnyPublisher<[User], Never> {
         friendsSubject.eraseToAnyPublisher()
     }
-
+    
     func loadInitialState() async {
         if let data = try? Data(contentsOf: stateURL),
            let decoded = try? JSONDecoder.currentMoment.decode(MockRepositoryState.self, from: data) {
@@ -83,7 +83,7 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
         } else {
             persist()
         }
-
+        
         publishState()
         await widgetService.syncSnapshots(
             moments: visibleMoments(for: currentUser()),
@@ -91,22 +91,22 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
             currentUser: currentUser()
         )
     }
-
+    
     func currentUser() -> User? {
         guard let currentUserID = state.currentUserID,
               let user = state.users.first(where: { $0.id == currentUserID }) else {
             return nil
         }
-
+        
         return decorate(user: user)
     }
-
+    
     func signInDemoUser() async throws {
         if currentUser() != nil {
             publishState()
             return
         }
-
+        
         let primaryUser = Self.seedPrimaryUser()
         if !state.users.contains(where: { $0.id == primaryUser.id }) {
             state.users.insert(primaryUser, at: 0)
@@ -115,7 +115,7 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
         persist()
         publishState()
     }
-
+    
     func signInAnonymously() async throws {
         let identifier = UUID().uuidString
         let user = User(
@@ -131,39 +131,39 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
         persist()
         publishState()
     }
-
+    
     func signOut() async throws {
         state.currentUserID = nil
         persist()
         publishState()
         await widgetService.syncSnapshots(moments: [], users: decoratedUsers(), currentUser: nil)
     }
-
+    
     func updateProfile(fullName: String, username: String, avatarURL: String?) async throws {
         let cleanedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedFullName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
-
+        
         guard !cleanedUsername.isEmpty else {
             throw AppError.invalidUsername
         }
-
+        
         guard let currentUserID = state.currentUserID,
               let index = state.users.firstIndex(where: { $0.id == currentUserID }) else {
             throw AppError.missingCurrentUser
         }
-
+        
         state.users[index].username = cleanedUsername
         state.users[index].fullName = cleanedFullName.isEmpty ? cleanedUsername : cleanedFullName
         state.users[index].avatarURL = avatarURL
-
+        
         persist()
         publishState()
     }
-
+    
     func searchUsers(matching query: String) async throws -> [User] {
         let cleaned = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let currentUser = currentUser()
-
+        
         return decoratedUsers()
             .filter { user in
                 guard user.id != currentUser?.id else { return false }
@@ -173,20 +173,20 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
             }
             .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
-
+    
     func addFriend(_ friendID: String) async throws {
         guard let currentUserID = state.currentUserID else {
             throw AppError.missingCurrentUser
         }
-
+        
         guard state.users.contains(where: { $0.id == friendID }) else {
             throw AppError.generic("Friend not found.")
         }
-
+        
         if state.friendships.contains(where: { $0.status == .accepted && Set([$0.requesterId, $0.receiverId]) == Set([currentUserID, friendID]) }) {
             return
         }
-
+        
         let friendship = Friendship(
             id: UUID().uuidString,
             requesterId: currentUserID,
@@ -198,29 +198,29 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
         persist()
         publishState()
     }
-
+    
     func removeFriend(_ friendID: String) async throws {
         guard let currentUserID = state.currentUserID else {
             throw AppError.missingCurrentUser
         }
-
+        
         state.friendships.removeAll {
             $0.status == .accepted && Set([$0.requesterId, $0.receiverId]) == Set([currentUserID, friendID])
         }
-
+        
         persist()
         publishState()
     }
-
+    
     func sendMoment(_ draft: MomentDraft) async throws -> Moment {
         guard let currentUser = currentUser() else {
             throw AppError.missingCurrentUser
         }
-
+        
         guard !draft.recipientIds.isEmpty else {
             throw AppError.noRecipientsSelected
         }
-
+        
         let identifier = UUID().uuidString
         let imageURL = try write(data: draft.imageData, named: "\(identifier).jpg")
         let thumbnailURL = try write(data: draft.thumbnailData, named: "\(identifier)-thumb.jpg")
@@ -235,7 +235,7 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
             senderName: currentUser.displayName,
             isLivePhoto: draft.isLivePhoto
         )
-
+        
         state.moments.insert(moment, at: 0)
         persist()
         publishState()
@@ -246,21 +246,21 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
         )
         return moment
     }
-
+    
     private func publishState() {
         let currentUser = currentUser()
         sessionSubject.send(currentUser)
         momentsSubject.send(visibleMoments(for: currentUser))
         friendsSubject.send(visibleFriends(for: currentUser))
     }
-
+    
     private func visibleMoments(for currentUser: User?) -> [Moment] {
         guard let currentUser else { return [] }
         return state.moments
             .filter { $0.senderId == currentUser.id || $0.recipientIds.contains(currentUser.id) }
             .sorted { $0.createdAt > $1.createdAt }
     }
-
+    
     private func visibleFriends(for currentUser: User?) -> [User] {
         guard let currentUser else { return [] }
         let friendIDs = Set(currentUser.friendIDs)
@@ -268,16 +268,16 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
             .filter { friendIDs.contains($0.id) }
             .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
-
+    
     private func decoratedUsers() -> [User] {
         state.users.map(decorate(user:))
     }
-
+    
     private func decorate(user: User) -> User {
         let friendIDs = acceptedFriendIDs(for: user.id)
         return user.applying(friendIDs: friendIDs)
     }
-
+    
     private func acceptedFriendIDs(for userID: String) -> [String] {
         state.friendships.compactMap { friendship in
             guard friendship.status == .accepted else { return nil }
@@ -290,18 +290,18 @@ final class MockCurrentMomentRepository: CurrentMomentRepositoryProtocol {
             return nil
         }
     }
-
+    
     private func persist() {
         do {
             let data = try JSONEncoder.currentMoment.encode(state)
             try data.write(to: stateURL, options: .atomic)
         } catch {
-            #if DEBUG
+#if DEBUG
             print("Persist failed: \(error)")
-            #endif
+#endif
         }
     }
-
+    
     private func write(data: Data, named fileName: String) throws -> URL {
         let fileURL = imagesDirectoryURL.appendingPathComponent(fileName)
         try data.write(to: fileURL, options: .atomic)
@@ -321,7 +321,7 @@ private extension MockCurrentMomentRepository {
             friendsCount: 4
         )
     }
-
+    
     static func seedState() -> MockRepositoryState {
         let now = Date()
         let currentUser = seedPrimaryUser()
@@ -334,14 +334,14 @@ private extension MockCurrentMomentRepository {
             User(id: "user-jules", username: "jules.park", fullName: "Jules Park", email: "jules@currentmoment.app", createdAt: now.addingTimeInterval(-210_000)),
             User(id: "user-ruby", username: "ruby.chen", fullName: "Ruby Chen", email: "ruby@currentmoment.app", createdAt: now.addingTimeInterval(-260_000))
         ]
-
+        
         let friendships = [
             Friendship(id: "friendship-1", requesterId: currentUser.id, receiverId: "user-lena", status: .accepted, createdAt: now.addingTimeInterval(-90_000)),
             Friendship(id: "friendship-2", requesterId: currentUser.id, receiverId: "user-mila", status: .accepted, createdAt: now.addingTimeInterval(-85_000)),
             Friendship(id: "friendship-3", requesterId: currentUser.id, receiverId: "user-sam", status: .accepted, createdAt: now.addingTimeInterval(-75_000)),
             Friendship(id: "friendship-4", requesterId: currentUser.id, receiverId: "user-noah", status: .accepted, createdAt: now.addingTimeInterval(-65_000))
         ]
-
+        
         let moments = [
             Moment(
                 id: "moment-1",
@@ -377,7 +377,7 @@ private extension MockCurrentMomentRepository {
                 isLivePhoto: false
             )
         ]
-
+        
         return MockRepositoryState(
             currentUserID: nil,
             users: users,
