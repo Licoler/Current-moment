@@ -8,12 +8,19 @@ final class CameraViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var isFlashOn = false
     
-    // MARK: - UI
-    
+    // MARK: - UI Elements
     private let previewView = CameraPreviewView()
-    private let loadingIndicator = UIActivityIndicatorView(style: .large)
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.color = .white
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        // Явно задаём начальный размер, чтобы избежать авто-констрейнтов
+        indicator.widthAnchor.constraint(equalToConstant: 37).isActive = true
+        indicator.heightAnchor.constraint(equalToConstant: 37).isActive = true
+        return indicator
+    }()
     
-    // Верхние кнопки
     private let friendsButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "person.2")
@@ -55,7 +62,6 @@ final class CameraViewController: UIViewController {
         return label
     }()
     
-    // Кнопка History (под верхней панелью)
     private let historyButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.title = "History"
@@ -69,7 +75,6 @@ final class CameraViewController: UIViewController {
         return button
     }()
     
-    // Нижние кнопки камеры
     private let flashButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "bolt.slash.fill")
@@ -136,14 +141,12 @@ final class CameraViewController: UIViewController {
     }()
     
     // MARK: - Callbacks
-    
     var onFriendsButtonTap: (() -> Void)?
     var onProfileButtonTap: (() -> Void)?
     var onHistoryButtonTap: (() -> Void)?
     var onPreviewRequested: ((CapturedMomentAsset) -> Void)?
     
     // MARK: - Init
-    
     init(viewModel: CameraViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -151,12 +154,11 @@ final class CameraViewController: UIViewController {
     required init?(coder: NSCoder) { fatalError() }
     
     // MARK: - Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
         
-        setupViews()
+        setupSubviews()
         setupConstraints()
         bindViewModel()
         
@@ -185,18 +187,16 @@ final class CameraViewController: UIViewController {
         previewView.clipsToBounds = true
     }
     
-    // MARK: - Setup
-    
-    private func setupViews() {
+    private func setupSubviews() {
         previewView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(previewView)
+        
         view.addSubview(loadingIndicator)
         view.addSubview(cameraUnavailableIconView)
         view.addSubview(cameraUnavailableLabel)
         
         [friendsButton, profileButton, appTitleLabel, historyButton,
          flashButton, flipButton, shutterButton].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
         
@@ -212,15 +212,17 @@ final class CameraViewController: UIViewController {
         let sidePadding: CGFloat = 20
         
         NSLayoutConstraint.activate([
+            // Preview квадрат
             previewView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             previewView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -40),
             previewView.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -sidePadding * 2),
             previewView.heightAnchor.constraint(equalTo: previewView.widthAnchor),
             
+            // Индикатор загрузки – по центру, с фиксированным размером
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            // Верхняя панель
+            // Верхние кнопки
             friendsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             friendsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
@@ -230,11 +232,11 @@ final class CameraViewController: UIViewController {
             profileButton.centerYAnchor.constraint(equalTo: friendsButton.centerYAnchor),
             profileButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
-            // History кнопка под верхней панелью, над камерой
+            // History кнопка над затвором
             historyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            historyButton.bottomAnchor.constraint(equalTo: previewView.topAnchor, constant: -16),
+            historyButton.bottomAnchor.constraint(equalTo: shutterButton.topAnchor, constant: -20),
             
-            // Нижние кнопки под камерой
+            // Затвор и боковые кнопки
             shutterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             shutterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
             
@@ -244,6 +246,7 @@ final class CameraViewController: UIViewController {
             flipButton.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
             flipButton.leadingAnchor.constraint(equalTo: shutterButton.trailingAnchor, constant: 32),
             
+            // Сообщение об ошибке камеры
             cameraUnavailableIconView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cameraUnavailableIconView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -28),
             cameraUnavailableIconView.widthAnchor.constraint(equalToConstant: 60),
@@ -270,8 +273,6 @@ final class CameraViewController: UIViewController {
             .store(in: &cancellables)
     }
     
-    // MARK: - Actions
-    
     @objc private func handleFlashTap() {
         isFlashOn.toggle()
         let imageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
@@ -294,15 +295,7 @@ final class CameraViewController: UIViewController {
         viewModel.captureMoment()
     }
     
-    @objc private func handleFriendsTap() {
-        onFriendsButtonTap?()
-    }
-    
-    @objc private func handleProfileTap() {
-        onProfileButtonTap?()
-    }
-    
-    @objc private func handleHistoryTap() {
-        onHistoryButtonTap?()
-    }
+    @objc private func handleFriendsTap()   { onFriendsButtonTap?() }
+    @objc private func handleProfileTap()   { onProfileButtonTap?() }
+    @objc private func handleHistoryTap()   { onHistoryButtonTap?() }
 }
