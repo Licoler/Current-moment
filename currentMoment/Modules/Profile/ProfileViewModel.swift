@@ -81,7 +81,7 @@ final class ProfileViewModel {
 
     private func streakDays(from dates: [Date]) -> Int {
         let calendar = Calendar.current
-        let uniqueDays = Array(Set(dates.map { calendar.startOfDay(for: $0) })).sorted(by: >)
+        let uniqueDays = Set(dates.map { calendar.startOfDay(for: $0) }).sorted(by: >)
         guard let firstDay = uniqueDays.first else { return 0 }
 
         var streak = 0
@@ -89,12 +89,9 @@ final class ProfileViewModel {
 
         while currentDay >= firstDay && uniqueDays.contains(currentDay) {
             streak += 1
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: currentDay) else {
-                break
-            }
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: currentDay) else { break }
             currentDay = previous
         }
-
         return streak
     }
 }

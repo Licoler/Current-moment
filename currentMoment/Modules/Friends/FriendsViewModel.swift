@@ -13,7 +13,6 @@ final class FriendsViewModel {
 
     init(repository: CurrentMomentRepositoryProtocol) {
         self.repository = repository
-
         repository.friendsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] friends in
@@ -28,21 +27,15 @@ final class FriendsViewModel {
 
     func addFriend(_ user: User) {
         Task {
-            do {
-                try await repository.addFriend(user.id)
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+            do { try await repository.addFriend(user.id) }
+            catch { errorMessage = error.localizedDescription }
         }
     }
 
     func removeFriend(_ user: User) {
         Task {
-            do {
-                try await repository.removeFriend(user.id)
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+            do { try await repository.removeFriend(user.id) }
+            catch { errorMessage = error.localizedDescription }
         }
     }
     
@@ -62,8 +55,7 @@ final class FriendsViewModel {
         case .instagramDMs:
             urlToOpen = URL(string: "instagram://direct?text=\(encodedText)")
         case .instagramStory:
-            // Instagram Story – сложнее, открываем просто профиль
-            urlToOpen = URL(string: "instagram://")
+            urlToOpen = URL(string: "instagram://")  // Instagram Story сложнее, просто открываем Instagram
         case .messages:
             urlToOpen = URL(string: "sms:&body=\(encodedText)")
         case .other:
