@@ -44,7 +44,7 @@ final class ProfileViewController: UIViewController {
             item.contentInsets = .init(top: 2, leading: 2, bottom: 2, trailing: 2)
 
             let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalWidth(fraction))
-            let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitem: item, count: 3)
+            let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item, item, item])
 
             let section = NSCollectionLayoutSection(group: group)
             section.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 12, bottom: 30, trailing: 12)
@@ -155,27 +155,9 @@ final class ProfileViewController: UIViewController {
     }
 
     private func presentEdit() {
-        guard let user = viewModel.user else { return }
-        let alert = UIAlertController(title: "Edit profile", message: nil, preferredStyle: .alert)
-        alert.addTextField { field in
-            field.placeholder = "Full name"
-            field.text        = user.fullName
-            field.autocapitalizationType = .words
-        }
-        alert.addTextField { field in
-            field.placeholder = "Username"
-            field.text        = user.username
-            field.autocorrectionType = .no
-            field.autocapitalizationType = .none
-        }
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self, weak alert] _ in
-            let fullName = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespaces) ?? ""
-            let username = alert?.textFields?.last?.text?.trimmingCharacters(in: .whitespaces) ?? ""
-            guard !fullName.isEmpty, !username.isEmpty else { return }
-            self?.viewModel.saveProfile(fullName: fullName, username: username)
-        })
-        present(alert, animated: true)
+        let edit = EditProfileViewController(viewModel: viewModel)
+        let nav = UINavigationController(rootViewController: edit)
+        navigationController?.present(nav, animated: true)
     }
 
     private func handleLogout() {
