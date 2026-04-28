@@ -11,6 +11,8 @@ struct ProfileStats {
 final class ProfileViewModel {
     @Published private(set) var user: User?
     @Published private(set) var stats = ProfileStats(photosSent: 0, friendsCount: 0, streakDays: 0)
+    @Published private(set) var momentsSent: [Moment] = []
+    @Published private(set) var isLoadingMoments: Bool = true
     @Published private(set) var isSaving = false
     @Published private(set) var errorMessage: String?
 
@@ -33,6 +35,7 @@ final class ProfileViewModel {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] moments in
                 self?.allMoments = moments
+                self?.isLoadingMoments = false
                 self?.recalculateStats()
             }
             .store(in: &cancellables)
@@ -68,12 +71,14 @@ final class ProfileViewModel {
     private func recalculateStats() {
         guard let user else {
             stats = ProfileStats(photosSent: 0, friendsCount: 0, streakDays: 0)
+            momentsSent = []
             return
         }
 
         let sentMoments = allMoments.filter { $0.senderId == user.id }
+        momentsSent = sentMoments.sorted(by: { $0.createdAt > $1.createdAt })
         stats = ProfileStats(
-            photosSent: sentMoments.count,
+            photosSent: momentsSent.count,
             friendsCount: user.friendsCount,
             streakDays: streakDays(from: sentMoments.map(\.createdAt))
         )
@@ -81,7 +86,7 @@ final class ProfileViewModel {
 
     private func streakDays(from dates: [Date]) -> Int {
         let calendar = Calendar.current
-        let uniqueDays = Set(dates.map { calendar.startOfDay(for: $0) }).sorted(by: >)
+        let uniqueDays = Array(Set(dates.map { calendar.startOfDay(for: $0) })).sorted(by: >)
         guard let firstDay = uniqueDays.first else { return 0 }
 
         var streak = 0
@@ -89,9 +94,12 @@ final class ProfileViewModel {
 
         while currentDay >= firstDay && uniqueDays.contains(currentDay) {
             streak += 1
-            guard let previous = calendar.date(byAdding: .day, value: -1, to: currentDay) else { break }
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: currentDay) else {
+                break
+            }
             currentDay = previous
         }
+
         return streak
     }
 }

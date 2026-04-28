@@ -23,6 +23,8 @@ final class CameraSessionController: NSObject {
     
     let captureSession = AVCaptureSession()
     var onPhotoCaptured: ((UIImage) -> Void)?
+    /// Called on main thread whenever availability changes (authorized / denied / unavailable / simulator)
+    var availabilityChanged: ((Availability) -> Void)?
     private(set) var availability: Availability = .unavailable
     private(set) var isCapturingPhoto = false
     
@@ -38,6 +40,11 @@ final class CameraSessionController: NSObject {
         captureSession.sessionPreset = .high
         captureSession.automaticallyConfiguresApplicationAudioSession = false
         captureSession.automaticallyConfiguresCaptureDeviceForWideColor = false
+        addSessionNotifications()
+    }
+
+    deinit {
+        removeSessionNotifications()
     }
     
     func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
@@ -115,7 +122,10 @@ final class CameraSessionController: NSObject {
             
             self.isConfigured = true
             self.availability = .available
-            DispatchQueue.main.async { completion(.available) }
+            DispatchQueue.main.async {
+                completion(.available)
+                self.availabilityChanged?(.available)
+            }
         }
     }
     
@@ -193,9 +203,22 @@ final class CameraSessionController: NSObject {
 extension CameraSessionController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         defer { isCapturingPhoto = false }
-        guard error == nil, let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
-        let finalImage: UIImage = (cameraPosition == .front) ? flipHorizontallyAndNormalize(image) : image
-        DispatchQueue.main.async { self.onPhotoCaptured?(finalImage) }
+        if let error = error {
+            // Log the error for diagnostics
+            #if DEBUG
+            print("[CameraSessionController] photo capture error: \(error)")
+            #endif
+            return
+        }
+        guard let data = photo.fileDataRepresentation() else { return }
+
+        // Heavy image processing (normalization / flipping) off the main thread
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            guard let image = UIImage(data: data) else { return }
+            let finalImage: UIImage = (self.cameraPosition == .front) ? self.flipHorizontallyAndNormalize(image) : image
+            DispatchQueue.main.async { self.onPhotoCaptured?(finalImage) }
+        }
     }
     
     private func flipHorizontallyAndNormalize(_ image: UIImage) -> UIImage {
@@ -222,5 +245,102 @@ extension CameraSessionController: AVCapturePhotoCaptureDelegate {
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         guard let flipped = context.makeImage() else { return image }
         return UIImage(cgImage: flipped, scale: normalized.scale, orientation: .up)
+    }
+}
+
+// MARK: - Session notifications
+extension CameraSessionController {
+    private func addSessionNotifications() {
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(sessionWasInterrupted(_:)),
+                                               name: AVCaptureSession.wasInterruptedNotification,
+                                               object: captureSession)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(sessionInterruptionEnded(_:)),
+                                               name: AVCaptureSession.interruptionEndedNotification,
+                                               object: captureSession)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(sessionRuntimeError(_:)),
+                                               name: AVCaptureSession.runtimeErrorNotification,
+                                               object: captureSession)
+
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationDidEnterBackground(_:)),
+                                               name: UIApplication.didEnterBackgroundNotification,
+                                               object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationWillEnterForeground(_:)),
+                                               name: UIApplication.willEnterForegroundNotification,
+                                               object: nil)
+    }
+
+    private func removeSessionNotifications() {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func sessionWasInterrupted(_ notification: Notification) {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            #if DEBUG
+            print("[CameraSessionController] session was interrupted")
+            #endif
+            self.availability = .unavailable
+            DispatchQueue.main.async { self.availabilityChanged?(.unavailable) }
+        }
+    }
+
+    @objc private func sessionInterruptionEnded(_ notification: Notification) {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            #if DEBUG
+            print("[CameraSessionController] session interruption ended")
+            #endif
+            // Attempt to restart if configured
+            if self.isConfigured {
+                self.availability = .available
+                DispatchQueue.main.async { self.availabilityChanged?(.available) }
+                if !self.captureSession.isRunning {
+                    self.captureSession.startRunning()
+                }
+            }
+        }
+    }
+
+    @objc private func sessionRuntimeError(_ notification: Notification) {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            let error = notification.userInfo?[AVCaptureSessionErrorKey] as? NSError
+            #if DEBUG
+            print("[CameraSessionController] runtime error: \(String(describing: error))")
+            #endif
+            // Try to recover after a short delay
+            self.availability = .unavailable
+            DispatchQueue.main.async { self.availabilityChanged?(.unavailable) }
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
+                self.sessionQueue.async {
+                    if self.isConfigured && !self.captureSession.isRunning {
+                        self.captureSession.startRunning()
+                        self.availability = .available
+                        DispatchQueue.main.async { self.availabilityChanged?(.available) }
+                    }
+                }
+            }
+        }
+    }
+
+    @objc private func applicationDidEnterBackground(_ notification: Notification) {
+        // stop session when app backgrounded
+        stopRunning()
+    }
+
+    @objc private func applicationWillEnterForeground(_ notification: Notification) {
+        // attempt to restart when app comes back
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.isConfigured {
+                self.captureSession.startRunning()
+            }
+        }
     }
 }
