@@ -1,214 +1,248 @@
-import Combine
 import UIKit
+import Combine
 
 final class HistoryViewController: UIViewController {
-
+    
     private let viewModel: HistoryViewModel
-    private var cancellables: Set<AnyCancellable> = []
-    private var pendingScrollMomentID: String?
+    private var cancellables = Set<AnyCancellable>()
     private var dataSource: UICollectionViewDiffableDataSource<Int, Moment>?
-
+    private var pendingScrollMomentID: String?
+    
     // MARK: - UI
-
-    private let backButton = IconCircleButton(symbol: "chevron.left")
-    private let titleLabel = UILabel()
-
-    // Empty state
-    private let emptyIconView  = UIImageView(image: UIImage(systemName: "photo.stack"))
-    private let emptyTitleLabel    = UILabel()
-    private let emptySubtitleLabel = UILabel()
-    private let emptyStackView     = UIStackView()
-
+    
     private lazy var collectionView: UICollectionView = {
-        let cv = UICollectionView(frame: .zero, collectionViewLayout: Self.makeLayout())
-        cv.backgroundColor             = .clear
-        cv.alwaysBounceVertical        = true
-        cv.showsVerticalScrollIndicator = false
-        cv.register(MomentGridCell.self, forCellWithReuseIdentifier: MomentGridCell.reuseIdentifier)
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = LayoutConstants.itemSpacing
+        layout.minimumLineSpacing = LayoutConstants.itemSpacing
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .black
+        cv.register(HistoryMomentCell.self, forCellWithReuseIdentifier: HistoryMomentCell.reuseIdentifier)
+        cv.translatesAutoresizingMaskIntoConstraints = false
         return cv
     }()
-
+    
+    private let emptyLabel: UILabel = {
+        let label = UILabel()
+        label.text = "No moments yet.\nSend your first photo!"
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = CMTypography.body
+        label.textColor = CMColor.textSecondary
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     // MARK: - Callbacks
-
+    
     var onBack: (() -> Void)?
     var onMomentSelected: ((Moment) -> Void)?
-
+    
     // MARK: - Init
-
+    
     init(viewModel: HistoryViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
-
     required init?(coder: NSCoder) { fatalError() }
-
+    
     // MARK: - Lifecycle
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = CMColor.background
+        view.backgroundColor = .black
         setupViews()
-        configureDataSource()
+        setupNavigation()
         bindViewModel()
     }
-
+    
     // MARK: - Public
-
+    
     func scrollToMoment(with id: String) {
         pendingScrollMomentID = id
+        attemptPendingScroll()
     }
-
-    // MARK: - Setup
-
-    private func setupViews() {
-        titleLabel.text      = "History"
-        titleLabel.font      = CMTypography.title2
-        titleLabel.textColor = CMColor.textPrimary
-
-        backButton.addTarget(self, action: #selector(handleBackTap), for: .touchUpInside)
-
-        // Empty state
-        emptyIconView.tintColor = CMColor.textTertiary
-        emptyIconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 44, weight: .light)
-
-        emptyTitleLabel.text          = "No moments yet"
-        emptyTitleLabel.font          = CMTypography.title2
-        emptyTitleLabel.textColor     = CMColor.textPrimary
-        emptyTitleLabel.textAlignment = .center
-
-        emptySubtitleLabel.text          = "Capture a moment and send it to your friends"
-        emptySubtitleLabel.font          = CMTypography.body
-        emptySubtitleLabel.textColor     = CMColor.textSecondary
-        emptySubtitleLabel.textAlignment = .center
-        emptySubtitleLabel.numberOfLines = 0
-
-        emptyStackView.axis      = .vertical
-        emptyStackView.alignment = .center
-        emptyStackView.spacing   = 12
-        emptyStackView.addArrangedSubview(emptyIconView)
-        emptyStackView.setCustomSpacing(20, after: emptyIconView)
-        emptyStackView.addArrangedSubview(emptyTitleLabel)
-        emptyStackView.addArrangedSubview(emptySubtitleLabel)
-        emptyStackView.isHidden = true
-
-        [backButton, titleLabel, collectionView, emptyStackView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
-
-        NSLayoutConstraint.activate([
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
-            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
-
-            collectionView.topAnchor.constraint(equalTo: backButton.bottomAnchor, constant: 18),
-            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14),
-            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -14),
-            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-
-            // Empty state по центру
-            emptyStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
-            emptyStackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 40),
-            emptyStackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -40)
-        ])
-    }
-
-    // MARK: - Data source
-
-    private func configureDataSource() {
-        dataSource = UICollectionViewDiffableDataSource<Int, Moment>(collectionView: collectionView) { collectionView, indexPath, moment in
-            let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: MomentGridCell.reuseIdentifier,
-                for: indexPath
-            ) as! MomentGridCell
-            cell.configure(with: moment)
-            return cell
-        }
-        collectionView.dataSource = dataSource
-        collectionView.delegate   = self
-    }
-
-    // MARK: - Bind
-
-    private func bindViewModel() {
-        viewModel.$moments
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] moments in
-                guard let self else { return }
-                var snapshot = NSDiffableDataSourceSnapshot<Int, Moment>()
-                snapshot.appendSections([0])
-                snapshot.appendItems(moments, toSection: 0)
-                self.dataSource?.apply(snapshot, animatingDifferences: true)
-                self.emptyStackView.isHidden = !moments.isEmpty
-                self.collectionView.isHidden = moments.isEmpty
-                self.attemptPendingScroll()
-            }
-            .store(in: &cancellables)
-    }
-
+    
     private func attemptPendingScroll() {
-        guard
-            let targetID  = pendingScrollMomentID,
-            let moment    = viewModel.moment(with: targetID),
-            let indexPath = dataSource?.indexPath(for: moment)
-        else { return }
+        guard let targetID = pendingScrollMomentID,
+              let moment = viewModel.moment(with: targetID),
+              let indexPath = dataSource?.indexPath(for: moment) else { return }
         collectionView.layoutIfNeeded()
         collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
         pendingScrollMomentID = nil
     }
-
-    @objc private func handleBackTap() { onBack?() }
-
-    // MARK: - Layout
-
-    private static func makeLayout() -> UICollectionViewLayout {
-        UICollectionViewCompositionalLayout { _, environment in
-            let width    = environment.container.effectiveContentSize.width
-            let columns: CGFloat = width > 520 ? 3 : 2
-            let fraction = 1 / columns
-
-            let itemSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(fraction),
-                heightDimension: .fractionalWidth(fraction * 1.28)
-            )
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            item.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 5, bottom: 6, trailing: 5)
-
-            let groupSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1),
-                heightDimension: .fractionalWidth(fraction * 1.28)
-            )
-            let group   = NSCollectionLayoutGroup.horizontal(
-                layoutSize: groupSize,
-                subitems: Array(repeating: item, count: Int(columns))
-            )
-            let section = NSCollectionLayoutSection(group: group)
-            return section
+    
+    // MARK: - Setup
+    
+    private func setupViews() {
+        view.addSubview(collectionView)
+        view.addSubview(emptyLabel)
+        NSLayoutConstraint.activate([
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: LayoutConstants.sideInset),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -LayoutConstants.sideInset),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+        
+        collectionView.delegate = self
+        configureDataSource()
+    }
+    
+    private func setupNavigation() {
+        title = "History"
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(handleBack)
+        )
+    }
+    
+    private func configureDataSource() {
+        dataSource = UICollectionViewDiffableDataSource<Int, Moment>(collectionView: collectionView) { cv, indexPath, moment in
+            let cell = cv.dequeueReusableCell(withReuseIdentifier: HistoryMomentCell.reuseIdentifier, for: indexPath) as! HistoryMomentCell
+            cell.configure(with: moment)
+            return cell
         }
+    }
+    
+    private func bindViewModel() {
+        viewModel.$moments
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] moments in
+                self?.applySnapshot(moments: moments)
+                self?.emptyLabel.isHidden = !moments.isEmpty
+                self?.attemptPendingScroll()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func applySnapshot(moments: [Moment]) {
+        var snapshot = NSDiffableDataSourceSnapshot<Int, Moment>()
+        snapshot.appendSections([0])
+        snapshot.appendItems(moments, toSection: 0)
+        dataSource?.apply(snapshot, animatingDifferences: true)
+    }
+    
+    @objc private func handleBack() {
+        onBack?()
     }
 }
 
-// MARK: - UICollectionViewDelegate
+// MARK: - Layout Constants
+private enum LayoutConstants {
+    static let itemSpacing: CGFloat = 12
+    static let sideInset: CGFloat = 16
+    static let minCellWidth: CGFloat = 100
+}
 
-extension HistoryViewController: UICollectionViewDelegate {
+// MARK: - UICollectionViewDelegateFlowLayout
+extension HistoryViewController: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let usableWidth = collectionView.bounds.width - LayoutConstants.sideInset * 2
+        let totalSpacing = LayoutConstants.itemSpacing
+        let columns = max(2, Int((usableWidth + totalSpacing) / (LayoutConstants.minCellWidth + totalSpacing)))
+        let totalSpacingWidth = CGFloat(columns - 1) * LayoutConstants.itemSpacing
+        let width = (usableWidth - totalSpacingWidth) / CGFloat(columns)
+        return CGSize(width: width, height: width) // квадрат
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        UIEdgeInsets(top: 24, left: 0, bottom: 40, right: 0)
+    }
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         guard let moment = dataSource?.itemIdentifier(for: indexPath) else { return }
         onMomentSelected?(moment)
     }
+}
 
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        viewModel.loadMoreIfNeeded(currentIndex: indexPath.item)
-
-        // Entrance animation
-        cell.alpha     = 0
-        cell.transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
-        UIView.animate(withDuration: 0.28, delay: 0, options: .curveEaseOut) {
-            cell.alpha     = 1
-            cell.transform = .identity
+// MARK: - Custom Cell
+final class HistoryMomentCell: UICollectionViewCell {
+    static let reuseIdentifier = "HistoryMomentCell"
+    
+    private let containerView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 22
+        view.layer.cornerCurve = .continuous
+        view.clipsToBounds = true
+        view.backgroundColor = .systemPurple
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let imageView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleAspectFill
+        iv.clipsToBounds = true
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        return iv
+    }()
+    
+    private let initialsLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.textColor = .white
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        contentView.addSubview(containerView)
+        containerView.addSubview(imageView)
+        containerView.addSubview(initialsLabel)
+        
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            
+            imageView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            
+            initialsLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            initialsLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+        ])
+    }
+    
+    required init?(coder: NSCoder) { fatalError() }
+    
+    func configure(with moment: Moment) {
+        // Инициалы из senderName
+        let components = moment.senderName.split(separator: " ")
+        let initials = components.compactMap { $0.first }.map(String.init).joined().uppercased()
+        initialsLabel.text = initials.isEmpty ? "?" : initials
+        
+        // Цвет из senderId
+        let hash = abs(moment.senderId.hashValue)
+        let r = CGFloat((hash >> 16) & 0xFF) / 255.0
+        let g = CGFloat((hash >> 8) & 0xFF) / 255.0
+        let b = CGFloat(hash & 0xFF) / 255.0
+        containerView.backgroundColor = UIColor(red: r, green: g, blue: b, alpha: 1)
+        
+        // Фото
+        if let url = URL(string: moment.imageURL), url.scheme?.hasPrefix("http") == true {
+            initialsLabel.isHidden = true
+            Task {
+                if let (data, _) = try? await URLSession.shared.data(from: url),
+                   let image = UIImage(data: data) {
+                    await MainActor.run {
+                        self.imageView.image = image
+                    }
+                }
+            }
+        } else {
+            initialsLabel.isHidden = false
+            imageView.image = nil
         }
     }
 }

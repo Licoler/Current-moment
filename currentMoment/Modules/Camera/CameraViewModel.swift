@@ -58,6 +58,10 @@ final class CameraViewModel {
         sessionController.switchCamera()
     }
     
+    func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
+        sessionController.setFlashMode(mode)
+    }
+    
     private func handleCapturedImage(_ image: UIImage) {
         guard let asset = CapturedMomentAsset.make(from: image) else {
             statusMessage = AppError.cameraUnavailable.localizedDescription

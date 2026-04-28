@@ -31,6 +31,7 @@ final class CameraSessionController: NSObject {
     private var activeInput: AVCaptureDeviceInput?
     private var isConfigured = false
     private(set) var cameraPosition: AVCaptureDevice.Position = .front
+    private var currentFlashMode: AVCaptureDevice.FlashMode = .off
     
     override init() {
         super.init()
@@ -39,21 +40,25 @@ final class CameraSessionController: NSObject {
         captureSession.automaticallyConfiguresCaptureDeviceForWideColor = false
     }
     
+    func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
+        currentFlashMode = mode
+    }
+    
     func prepare(completion: @escaping (Availability) -> Void) {
         #if targetEnvironment(simulator)
         availability = .simulator
         completion(.simulator)
         #else
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
         case .authorized:
             configureSession(completion: completion)
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                guard let self else { return }
                 if granted {
-                    self.configureSession(completion: completion)
+                    self?.configureSession(completion: completion)
                 } else {
-                    self.availability = .denied
+                    self?.availability = .denied
                     DispatchQueue.main.async { completion(.denied) }
                 }
             }
@@ -133,7 +138,7 @@ final class CameraSessionController: NSObject {
         guard !isCapturingPhoto, availability == .available else { return }
         isCapturingPhoto = true
         let settings = AVCapturePhotoSettings()
-        settings.flashMode = .off
+        settings.flashMode = currentFlashMode
         if #available(iOS 16.0, *) {
             let dims = photoOutput.maxPhotoDimensions
             if dims.width > 0 && dims.height > 0 {

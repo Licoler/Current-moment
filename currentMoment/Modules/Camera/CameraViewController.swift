@@ -6,16 +6,114 @@ final class CameraViewController: UIViewController {
     
     private let viewModel: CameraViewModel
     private var cancellables = Set<AnyCancellable>()
+    private var isFlashOn = false
     
-    // Прямой preview без лишних обёрток
+    // MARK: - UI
+    
     private let previewView = CameraPreviewView()
+    private let loadingIndicator = UIActivityIndicatorView(style: .large)
     
-    private let loadingIndicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .large)
-        indicator.color = .white
-        indicator.hidesWhenStopped = true
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        return indicator
+    // Верхние кнопки
+    private let friendsButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "person.2")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+        let button = UIButton(configuration: config)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        button.layer.cornerRadius = 22
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 44),
+            button.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        return button
+    }()
+    
+    private let profileButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "person.crop.circle")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+        let button = UIButton(configuration: config)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        button.layer.cornerRadius = 22
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 44),
+            button.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        return button
+    }()
+    
+    private let appTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "CurrentMoment"
+        label.font = CMTypography.headline
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    // Кнопка History (под верхней панелью)
+    private let historyButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = "History"
+        config.image = UIImage(systemName: "chevron.right")
+        config.imagePlacement = .trailing
+        config.imagePadding = 6
+        config.baseForegroundColor = .white
+        let button = UIButton(configuration: config)
+        button.titleLabel?.font = CMTypography.bodySemibold
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    // Нижние кнопки камеры
+    private let flashButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "bolt.slash.fill")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+        let button = UIButton(configuration: config)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        button.layer.cornerRadius = 28
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 56),
+            button.heightAnchor.constraint(equalToConstant: 56)
+        ])
+        return button
+    }()
+    
+    private let flipButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "arrow.triangle.2.circlepath.camera")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+        let button = UIButton(configuration: config)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        button.layer.cornerRadius = 28
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 56),
+            button.heightAnchor.constraint(equalToConstant: 56)
+        ])
+        return button
+    }()
+    
+    private let shutterButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.backgroundColor = .white
+        button.layer.cornerRadius = 44
+        button.layer.borderWidth = 4
+        button.layer.borderColor = UIColor.white.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 88),
+            button.heightAnchor.constraint(equalToConstant: 88)
+        ])
+        return button
     }()
     
     private let cameraUnavailableIconView: UIImageView = {
@@ -37,30 +135,22 @@ final class CameraViewController: UIViewController {
         return label
     }()
     
-    private let friendsButton = makeCircleButton(symbol: "person.2")
-    private let profileButton = makeCircleButton(symbol: "person.crop.circle")
-    private let appTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "CurrentMoment"
-        label.font = CMTypography.headline
-        label.textColor = .white
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    private let shutterButton = ShutterButton()
-    private let flipButton = makeCircleButton(symbol: "arrow.triangle.2.circlepath.camera")
-    private let historyButton = makeCircleButton(symbol: "clock.arrow.circlepath")
+    // MARK: - Callbacks
     
     var onFriendsButtonTap: (() -> Void)?
     var onProfileButtonTap: (() -> Void)?
     var onHistoryButtonTap: (() -> Void)?
     var onPreviewRequested: ((CapturedMomentAsset) -> Void)?
     
+    // MARK: - Init
+    
     init(viewModel: CameraViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError() }
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -91,12 +181,11 @@ final class CameraViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Принудительно обновляем скругление
         previewView.layer.cornerRadius = 24
         previewView.clipsToBounds = true
-        // Диагностика: выводим frame previewView
-        print("previewView frame: \(previewView.frame)")
     }
+    
+    // MARK: - Setup
     
     private func setupViews() {
         previewView.translatesAutoresizingMaskIntoConstraints = false
@@ -105,7 +194,8 @@ final class CameraViewController: UIViewController {
         view.addSubview(cameraUnavailableIconView)
         view.addSubview(cameraUnavailableLabel)
         
-        [friendsButton, profileButton, appTitleLabel, historyButton, shutterButton, flipButton].forEach {
+        [friendsButton, profileButton, appTitleLabel, historyButton,
+         flashButton, flipButton, shutterButton].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview($0)
         }
@@ -113,22 +203,24 @@ final class CameraViewController: UIViewController {
         friendsButton.addTarget(self, action: #selector(handleFriendsTap), for: .touchUpInside)
         profileButton.addTarget(self, action: #selector(handleProfileTap), for: .touchUpInside)
         historyButton.addTarget(self, action: #selector(handleHistoryTap), for: .touchUpInside)
+        flashButton.addTarget(self, action: #selector(handleFlashTap), for: .touchUpInside)
         flipButton.addTarget(self, action: #selector(handleFlipTap), for: .touchUpInside)
         shutterButton.addTarget(self, action: #selector(handleShutterTap), for: .touchUpInside)
     }
     
     private func setupConstraints() {
         let sidePadding: CGFloat = 20
+        
         NSLayoutConstraint.activate([
-            // Квадратный preview по центру
             previewView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            previewView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            previewView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -40),
             previewView.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -sidePadding * 2),
             previewView.heightAnchor.constraint(equalTo: previewView.widthAnchor),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
+            // Верхняя панель
             friendsButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             friendsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             
@@ -138,20 +230,19 @@ final class CameraViewController: UIViewController {
             profileButton.centerYAnchor.constraint(equalTo: friendsButton.centerYAnchor),
             profileButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
-            shutterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            shutterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28),
-            shutterButton.widthAnchor.constraint(equalToConstant: 82),
-            shutterButton.heightAnchor.constraint(equalToConstant: 82),
+            // History кнопка под верхней панелью, над камерой
+            historyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            historyButton.bottomAnchor.constraint(equalTo: previewView.topAnchor, constant: -16),
             
-            historyButton.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
-            historyButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 44),
-            historyButton.widthAnchor.constraint(equalToConstant: 44),
-            historyButton.heightAnchor.constraint(equalToConstant: 44),
+            // Нижние кнопки под камерой
+            shutterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            shutterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
+            
+            flashButton.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
+            flashButton.trailingAnchor.constraint(equalTo: shutterButton.leadingAnchor, constant: -32),
             
             flipButton.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
-            flipButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -44),
-            flipButton.widthAnchor.constraint(equalToConstant: 44),
-            flipButton.heightAnchor.constraint(equalToConstant: 44),
+            flipButton.leadingAnchor.constraint(equalTo: shutterButton.trailingAnchor, constant: 32),
             
             cameraUnavailableIconView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cameraUnavailableIconView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -28),
@@ -179,29 +270,39 @@ final class CameraViewController: UIViewController {
             .store(in: &cancellables)
     }
     
-    @objc private func handleFriendsTap()   { onFriendsButtonTap?() }
-    @objc private func handleProfileTap()   { onProfileButtonTap?() }
-    @objc private func handleHistoryTap()   { onHistoryButtonTap?() }
-    @objc private func handleFlipTap()      { viewModel.switchCamera() }
-    @objc private func handleShutterTap()   {
-        shutterButton.animateCapturePulse()
+    // MARK: - Actions
+    
+    @objc private func handleFlashTap() {
+        isFlashOn.toggle()
+        let imageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
+        flashButton.configuration?.image = UIImage(systemName: imageName)
+        viewModel.setFlashMode(isFlashOn ? .on : .off)
+    }
+    
+    @objc private func handleFlipTap() {
+        viewModel.switchCamera()
+    }
+    
+    @objc private func handleShutterTap() {
+        UIView.animate(withDuration: 0.12, animations: {
+            self.shutterButton.transform = CGAffineTransform(scaleX: 0.88, y: 0.88)
+        }, completion: { _ in
+            UIView.animate(withDuration: 0.22, delay: 0, usingSpringWithDamping: 0.72, initialSpringVelocity: 0.3) {
+                self.shutterButton.transform = .identity
+            }
+        })
         viewModel.captureMoment()
     }
     
-    private static func makeCircleButton(symbol: String) -> UIButton {
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: symbol)
-        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
-        let button = UIButton(configuration: config)
-        button.tintColor = .white
-        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
-        button.layer.cornerRadius = 22
-        button.clipsToBounds = true
-        button.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 44),
-            button.heightAnchor.constraint(equalToConstant: 44)
-        ])
-        return button
+    @objc private func handleFriendsTap() {
+        onFriendsButtonTap?()
+    }
+    
+    @objc private func handleProfileTap() {
+        onProfileButtonTap?()
+    }
+    
+    @objc private func handleHistoryTap() {
+        onHistoryButtonTap?()
     }
 }
