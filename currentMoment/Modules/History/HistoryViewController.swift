@@ -8,7 +8,6 @@ final class HistoryViewController: UIViewController {
     private var dataSource: UICollectionViewDiffableDataSource<Int, Moment>?
     private var pendingScrollMomentID: String?
     
-    // Кастомная кнопка назад (на случай, если навбар всё ещё скрыт)
     private let backButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.image = UIImage(systemName: "chevron.left")
@@ -80,27 +79,28 @@ final class HistoryViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: animated)
-        title = "History"
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: self,
-            action: #selector(handleBack)
-        )
+        navigationController?.setNavigationBarHidden(true, animated: animated)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.setNavigationBarHidden(true, animated: animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
     
     private func setupViews() {
+        view.addSubview(backButton)
+        view.addSubview(titleLabel)
         view.addSubview(collectionView)
         view.addSubview(emptyLabel)
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+            
+            collectionView.topAnchor.constraint(equalTo: backButton.bottomAnchor, constant: 16),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -198,23 +198,25 @@ final class HistoryMomentCell: UICollectionViewCell {
         contentView.layer.cornerRadius = 22
         contentView.layer.cornerCurve = .continuous
         contentView.clipsToBounds = true
-        contentView.backgroundColor = .darkGray
+        contentView.backgroundColor = UIColor(white: 0.2, alpha: 1)
     }
     
     required init?(coder: NSCoder) { fatalError() }
     
     func configure(with moment: Moment) {
+        imageView.image = nil
+        contentView.backgroundColor = UIColor(white: 0.2, alpha: 1)
+        
         if let url = URL(string: moment.imageURL), url.scheme?.hasPrefix("http") == true {
             Task {
                 if let (data, _) = try? await URLSession.shared.data(from: url),
                    let image = UIImage(data: data) {
                     await MainActor.run {
                         self.imageView.image = image
+                        self.contentView.backgroundColor = .clear
                     }
                 }
             }
-        } else {
-            imageView.image = nil
         }
     }
 }

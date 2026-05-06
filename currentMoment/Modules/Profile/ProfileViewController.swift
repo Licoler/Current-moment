@@ -10,11 +10,36 @@ final class ProfileViewController: UIViewController {
     private let viewModel: ProfileViewModel
     private var cancellables: Set<AnyCancellable> = []
     
-    // UI
     private var collectionView: UICollectionView!
     private var dataSource: UICollectionViewDiffableDataSource<Section, Moment.ID>!
     private let headerView = ProfileHeaderView()
     private let activity = UIActivityIndicatorView(style: .large)
+    
+    private let backButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "chevron.left")
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 18, weight: .medium)
+        let button = UIButton(configuration: config)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        button.layer.cornerRadius = 20
+        button.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 40),
+            button.heightAnchor.constraint(equalToConstant: 40)
+        ])
+        return button
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Profile"
+        label.font = CMTypography.title2
+        label.textColor = CMColor.textPrimary
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
     var onBack: (() -> Void)?
     var onLoggedOut: (() -> Void)?
@@ -29,10 +54,34 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CMColor.background
+        
+        setupNavigationBar()
+        setupViews()
+        setupConstraints()
         setupCollectionView()
-        setupLayout()
         bindViewModel()
         headerView.onEditTap = { [weak self] in self?.presentEdit() }
+        
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
+    }
+    
+    private func setupNavigationBar() {
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
+    private func setupViews() {
+        view.addSubview(backButton)
+        view.addSubview(titleLabel)
+    }
+    
+    private func setupConstraints() {
+        NSLayoutConstraint.activate([
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+        ])
     }
     
     private func setupCollectionView() {
@@ -66,7 +115,7 @@ final class ProfileViewController: UIViewController {
         view.addSubview(activity)
         
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -94,12 +143,6 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-    private func setupLayout() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Moment.ID>()
-        snapshot.appendSections([.main])
-        dataSource.apply(snapshot, animatingDifferences: false)
-    }
-    
     private func bindViewModel() {
         viewModel.$user
             .receive(on: DispatchQueue.main)
@@ -118,11 +161,7 @@ final class ProfileViewController: UIViewController {
         viewModel.$isLoadingMoments
             .receive(on: DispatchQueue.main)
             .sink { [weak self] loading in
-                if loading {
-                    self?.activity.startAnimating()
-                } else {
-                    self?.activity.stopAnimating()
-                }
+                if loading { self?.activity.startAnimating() } else { self?.activity.stopAnimating() }
             }
             .store(in: &cancellables)
         
@@ -157,13 +196,8 @@ final class ProfileViewController: UIViewController {
         navigationController?.present(nav, animated: true)
     }
     
-    private func handleLogout() {
-        let alert = UIAlertController(title: "Log out", message: "Are you sure you want to end the current session?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Log out", style: .destructive) { [weak self] _ in
-            self?.viewModel.logout { [weak self] in self?.onLoggedOut?() }
-        })
-        present(alert, animated: true)
+    @objc private func backTapped() {
+        onBack?()
     }
 }
 

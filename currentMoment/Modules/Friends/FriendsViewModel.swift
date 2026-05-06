@@ -16,6 +16,7 @@ final class FriendsViewModel {
         repository.friendsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] friends in
+                print("Friends received in ViewModel: \(friends.count)")
                 self?.friends = friends
             }
             .store(in: &cancellables)

@@ -4,8 +4,6 @@ final class MomentGridCell: UICollectionViewCell {
     
     static let reuseIdentifier = "MomentGridCell"
     
-    // MARK: - UI
-    
     private let imageView = UIImageView()
     private let gradientView = UIView()
     private let senderLabel = UILabel()
@@ -14,7 +12,7 @@ final class MomentGridCell: UICollectionViewCell {
     
     private var representedMomentID: String?
     
-    // MARK: - Init
+    private let mockImageNames = ["mockOne", "mockTwo", "mockThree", "mockFour", "mockFive"]
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -22,9 +20,9 @@ final class MomentGridCell: UICollectionViewCell {
         contentView.layer.cornerRadius = 24
         contentView.layer.cornerCurve = .continuous
         contentView.clipsToBounds = true
-        contentView.backgroundColor = CMColor.cardElevated
+        contentView.backgroundColor = UIColor(white: 0.15, alpha: 1)
         
-        imageView.contentMode  = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         
         let gl = CAGradientLayer()
@@ -65,29 +63,29 @@ final class MomentGridCell: UICollectionViewCell {
         ])
     }
     
-    @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-    
-    // MARK: - Layout
     
     override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer?.frame = gradientView.bounds
     }
     
-    // MARK: - Configure
-    
     func configure(with moment: Moment) {
         representedMomentID = moment.id
         senderLabel.text = moment.senderName
         dateLabel.text = moment.createdAt.shortRelativeDescription()
-        imageView.image = nil
+        
+        let mockIndex = abs(moment.id.hashValue) % mockImageNames.count
+        let mockImage = UIImage(named: mockImageNames[mockIndex])
+        imageView.image = mockImage
         
         Task { [weak self] in
             let image = await ImagePipeline.shared.image(for: moment.thumbnailURL ?? moment.imageURL)
             await MainActor.run {
                 guard self?.representedMomentID == moment.id else { return }
-                self?.imageView.image = image
+                if let img = image {
+                    self?.imageView.image = img
+                }
             }
         }
     }

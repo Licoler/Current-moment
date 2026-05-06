@@ -7,7 +7,6 @@ final class MomentDetailViewController: UIViewController {
     private let imagePipeline: ImagePipeline
     
     // MARK: - UI
-    
     private let backButton = IconCircleButton(symbol: "chevron.left")
     private let shareButton = IconCircleButton(symbol: "square.and.arrow.up")
     private let deleteButton = IconCircleButton(symbol: "trash")
@@ -79,6 +78,8 @@ final class MomentDetailViewController: UIViewController {
         setupKeyboardHandling()
         setupTapToDismissKeyboard()
         updateContent()
+        
+        navigationItem.setHidesBackButton(true, animated: false)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -192,7 +193,8 @@ final class MomentDetailViewController: UIViewController {
     }
     
     private func updateContent() {
-        let currentUserID = (UIApplication.shared.delegate as? AppDelegate)?.container.repository.currentUser()?.id
+        let container = (UIApplication.shared.delegate as? AppDelegate)?.container
+        let currentUserID = container?.repository.currentUser()?.id
         let isOwnMoment = moment.senderId == currentUserID
         senderLabel.text = isOwnMoment ? "You" : moment.senderName
         dateLabel.text = moment.createdAt.dayMonthDescription()
@@ -201,9 +203,17 @@ final class MomentDetailViewController: UIViewController {
     }
     
     private func loadImage() {
+        imageView.image = nil
+        imageView.backgroundColor = CMColor.cardElevated
+        
         Task { [weak self] in
             let image = await self?.imagePipeline.image(for: self?.moment.imageURL)
-            await MainActor.run { self?.imageView.image = image }
+            await MainActor.run {
+                if let img = image {
+                    self?.imageView.image = img
+                    self?.imageView.backgroundColor = .clear
+                }
+            }
         }
     }
     
@@ -280,12 +290,21 @@ final class MomentDetailViewController: UIViewController {
         let alert = UIAlertController(title: "Delete moment", message: "Are you sure you want to delete this moment?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
-            // Здесь вызвать удаление из репозитория
-            guard let repo = (UIApplication.shared.delegate as? AppDelegate)?.container.repository else { return }
+            guard let self = self,
+                  let repo = (UIApplication.shared.delegate as? AppDelegate)?.container.repository else { return }
             Task {
-                await MainActor.run {
-                    self?.onDelete?()
-                    self?.onBack?()
+                do {
+                    try await repo.deleteMoment(self.moment.id)
+                    await MainActor.run {
+                        self.onDelete?()
+                        self.onBack?()
+                    }
+                } catch {
+                    await MainActor.run {
+                        let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
                 }
             }
         })
@@ -295,13 +314,28 @@ final class MomentDetailViewController: UIViewController {
     @objc private func sendReply() {
         let text = replyTextView.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        
         replyTextView.text = ""
         replyPlaceholder.isHidden = false
         view.endEditing(true)
         
-        let alert = UIAlertController(title: "Reply sent", message: "Your reply has been sent.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        Task {
+            do {
+                guard let repo = (UIApplication.shared.delegate as? AppDelegate)?.container.repository else { return }
+                try await repo.sendReply(momentId: moment.id, content: text)
+                await MainActor.run {
+                    let alert = UIAlertController(title: "Reply sent", message: "Your reply has been sent.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            } catch {
+                await MainActor.run {
+                    let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                }
+            }
+        }
     }
 }
 

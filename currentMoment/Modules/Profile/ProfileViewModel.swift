@@ -99,7 +99,6 @@ final class ProfileViewModel {
             }
             currentDay = previous
         }
-        
         return streak
     }
 }

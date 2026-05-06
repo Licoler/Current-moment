@@ -2,48 +2,74 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Capture live moments to send them straight into your circle.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>To record videos with sound.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Store captured moments and widget previews on your device.</string>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>currentmoment</string>
-				<string>locketclone</string>
-			</array>
-		</dict>
-	</array>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>tg</string>
-		<string>whatsapp</string>
-		<string>instagram</string>
-		<string>instagram-stories</string>
-		<string>sms</string>
-	</array>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
-		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneConfigurationName</key>
-					<string>Default Configuration</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-				</dict>
-			</array>
-		</dict>
-	</dict>
+
+    <!-- CAMERA -->
+    <key>NSCameraUsageDescription</key>
+    <string>We need access to camera to capture moments.</string>
+
+    <!-- MICROPHONE -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>We need microphone to record video with sound.</string>
+
+    <!-- PHOTO LIBRARY (save only) -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>We save captured moments to your photo library.</string>
+
+    <!-- LOCAL NETWORK (ВАЖНО для 192.168.x.x) -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>We use local network to connect to backend server.</string>
+
+    <!-- LAUNCH SCREEN – обязательный ключ для полноэкранного режима -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+
+    <!-- Deep links -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>currentmoment</string>
+                <string>locketclone</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Schemes for canOpenURL -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>tg</string>
+        <string>whatsapp</string>
+        <string>instagram</string>
+        <string>instagram-stories</string>
+        <string>sms</string>
+    </array>
+
+    <!-- Scene -->
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+        <key>UISceneConfigurations</key>
+        <dict>
+            <key>UIWindowSceneSessionRoleApplication</key>
+            <array>
+                <dict>
+                    <key>UISceneConfigurationName</key>
+                    <string>Default Configuration</string>
+                    <key>UISceneDelegateClassName</key>
+                    <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+                </dict>
+            </array>
+        </dict>
+    </dict>
+
+    <!-- IMPORTANT: ATS -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+
 </dict>
 </plist>
