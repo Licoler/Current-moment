@@ -149,22 +149,25 @@ currentMoment/
 ## Screenshots
 
 > Добавь сюда свои скриншоты (папка `Screenshots` в репозитории)
+### Auth
 
+![Auth](Screenshots/signIn.jpg)
+![Auth](Screenshots/signUp.jpg)
 ### Camera
 
-![Camera](Screenshots/IMAGE 2026-04-28 19:42:27.jpg)
+![Camera](Screenshots/camera.jpg)
 
 ### Friends
 
-![Friends](Screenshots/friends.png)
+![Friends](Screenshots/friends.jpg)
 
 ### Preview
 
-![Preview](Screenshots/preview.png)
+![Preview](Screenshots/preview.jpg)
 
 ### Profile
 
-![Profile](Screenshots/profile.png)
+![Profile](Screenshots/profile.jpg)
 
 
 ---
